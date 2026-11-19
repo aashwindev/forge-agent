@@ -1,0 +1,36 @@
+{
+  "name": "forge-agent",
+  "displayName": "Forge Agent",
+  "description": "Editor-native coding agent whose loop runs on TrueForge",
+  "version": "0.0.1",
+  "publisher": "forge-agent",
+  "license": "MIT",
+  "engines": { "vscode": "^1.90.0" },
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      { "command": "forge.ask", "title": "Forge: Ask Agent" }
+    ],
+    "configuration": {
+      "title": "Forge Agent",
+      "properties": {
+        "forge.baseUrl": { "type": "string", "default": "http://localhost:8790", "description": "TrueForge server URL (local mode)" },
+        "forge.model": { "type": "string", "default": "anthropic/claude-sonnet-4-6", "description": "Model name as configured in TrueForge Settings -> Models" }
+      }
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
+    "watch": "npm run build -- --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@truefoundry/trueforge-sdk": "latest"
+  }
+}

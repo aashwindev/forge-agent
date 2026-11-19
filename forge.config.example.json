@@ -1,0 +1,6 @@
+{
+  "_comment": "Models are configured inside TrueForge (Settings -> Models), never in this repo. Copy to forge.config.json if you need local overrides. Never commit keys.",
+  "baseUrl": "http://localhost:8790",
+  "model": "anthropic/claude-sonnet-4-6",
+  "fallbackModel": "<second model configured in TrueForge>"
+}
