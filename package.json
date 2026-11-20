@@ -2,9 +2,13 @@
   "name": "ledgerforge",
   "displayName": "LedgerForge",
   "description": "Editor-native coding agent whose loop runs on TrueForge",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "publisher": "ledgerforge",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aashwindev/ledgerforge"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },

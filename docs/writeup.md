@@ -1,6 +1,6 @@
 # LedgerForge: TrueFoundry Forge-a-thon, Round 1
 
-*Every change reviewed, every choice explained, every failure survived.* Repo: https://github.com/aashwindev/ledgerforge · Video: TODO_VIDEO_URL
+*Every change reviewed, every choice explained, every failure survived.* Repo: https://github.com/aashwindev/ledgerforge · Video: https://github.com/aashwindev/ledgerforge/releases/download/v1.0.0/LedgerForge-demo.mp4
 
 The brief names three ways AI coding tools fail: they lose track of the file you care about, rewrite code you did not ask them to touch, and edit symbols that do not exist. LedgerForge answers each one inside the editor:
 - A **Context Receipt** shows which files the agent chose, and why.
@@ -102,14 +102,14 @@ Unknown approval requests are denied (fail closed).
 
 | Row | Time | Claim (measured on the final build) |
 |---|---|---|
-| A1 Inline edit | TODO | Task A: select, Cmd/Ctrl+Alt+K, diff in about 5 s with ✓ per hunk (A) and ✗ per hunk (C); prints `False` |
-| A2 Agent mode | TODO | Task B: `cli.py`, `test_cli.py`, `cli.rst` and `CHANGES.rst` found and edited unprompted; 59 tests pass; masked JSON |
-| A3 Streaming + cancel | TODO | tokens stream live; typing works during a run; Stop halts in under 100 ms and rolls back the accepted hunk; `git status` clean |
-| B1 Context | TODO | Context Receipt in Task B: 10 chosen and 5 excluded files with reasons, 2,991 / 8,000-token meter |
-| B2 Diff safety | TODO | per-hunk review; Undo Last Change (A) and Undo Last Run (B) restore files, `git status` clean |
-| B3 Resilience | TODO | endpoint unreachable → retries at 1 s and 3 s → automatic fallback in the same session, no clicks; `git status` clean |
-| B4 TrueForge | TODO | session shows `ledgerforge-editor` tool calls, approval events and the subagent thread |
-| C1 Video | — | A → B → C in order, each verified on screen |
+| A1 Inline edit | 0:44, 0:50, 2:59 | Task A: select, Cmd/Ctrl+Alt+K, diff in about 5 s with ✓ per hunk (A) and ✗ per hunk (C); prints `False` |
+| A2 Agent mode | 1:10–2:15 | Task B: `cli.py`, `test_cli.py`, `cli.rst` and `CHANGES.rst` found and edited unprompted; 59 tests pass; masked JSON |
+| A3 Streaming + cancel | 1:29, 3:15–3:27 | tokens stream live; typing works during a run; Stop halts in under 100 ms and rolls back the accepted hunk; `git status` clean |
+| B1 Context | 1:22, 1:52 | Context Receipt in Task B: 10 chosen and 5 excluded files with reasons, 2,991 / 8,000-token meter |
+| B2 Diff safety | 0:50, 1:04, 2:24 | per-hunk review; Undo Last Change (A) and Undo Last Run (B) restore files, `git status` clean |
+| B3 Resilience | 2:30–3:05 | endpoint unreachable → retries at 1 s and 3 s → automatic fallback in the same session, no clicks; `git status` clean |
+| B4 TrueForge | 1:35, 2:15 | session shows `ledgerforge-editor` tool calls, approval events and the subagent thread |
+| C1 Video | 0:33, 1:10, 2:30 | A → B → C in order, each verified on screen |
 | C2 Write-up | — | this document |
 
 ## 7. Tools used

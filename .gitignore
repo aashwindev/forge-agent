@@ -3,3 +3,9 @@ dist/
 *.vsix
 .env
 ledgerforge.config.json
+
+# internal planning notes (kept local)
+docs/RECORDING.md
+docs/PRD.md
+docs/PROGRESS.md
+__pycache__/
