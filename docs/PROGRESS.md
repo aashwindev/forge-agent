@@ -48,7 +48,7 @@ Source of truth: [PRD.md](PRD.md) §6 (build order). Tick an item only when its 
 - [x] **Task C without an invalid key (Aashwin's request).** Removed the broken Anthropic provider from TrueForge. Added a custom provider `local-ollama` (`http://127.0.0.1:11434/v1`, nothing listening) = the rules' "unreachable endpoint". Defaults now OpenAI only: mini primary, nano fallback. Verified e2e taskC: ECONNREFUSED ×3 → fallback to gpt-5-4-mini in the same session → diff 10.7 s → reject → clean.
 - [ ] **8. Record video** per PRD §4. Gate: every clause in PRD §2 visible.
 - [ ] **9. Write-up PDF** per PRD §5, scorecard timestamps from the final cut.
-  - [x] `docs/writeup.md` drafted, measured costs filled in. Left: team details, video URL, timestamps, then PDF.
+  - [x] `docs/writeup.md` drafted, measured costs filled in, trimmed to 1,160 words: renders to 2 pages + 5 lines (A4). Export: `scripts/writeup-pdf.sh`. Left: team details, video URL, timestamps.
 - [ ] **10. Clean-clone README check, secrets grep, links public (incognito), submit form.**
   - [x] README rewritten (setup, agent-definition loading incl. tested manual `curl`, architecture, commands, tests).
   - [x] Fresh `git clone` -> `npm install && npm run build` OK; `agent/*.json`, LICENSE present.
