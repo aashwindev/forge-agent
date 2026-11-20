@@ -22,7 +22,7 @@ const BACKOFF_MS = [1000, 3000];
 const FIRST_EVENT_TIMEOUT_MS = 20_000;
 
 export class Runner {
-  private active?: { abort: AbortController; sessionId?: string; attemptId: string; runId: string; allowCommands: boolean; approved: Set<string> };
+  private active?: { abort: AbortController; sessionId?: string; attemptId: string; runId: string; allowCommands: boolean; approved: Set<string>; ranTests: boolean };
   private seq = 0;
 
   constructor(
@@ -38,9 +38,10 @@ export class Runner {
 
   /** Checked by the run_command MCP handler: only commands the user approved in this run (or read-only ones) execute. */
   commandAllowed(line: string): boolean {
-    if (isAutoApproved(line)) return true;
     const a = this.active;
-    return !!a && (a.allowCommands || a.approved.delete(line));
+    const ok = isAutoApproved(line) || (!!a && (a.allowCommands || a.approved.delete(line)));
+    if (ok && a && /^(pytest|python3? -m pytest)\b/.test(line)) a.ranTests = true;
+    return ok;
   }
 
   async start(kind: AgentKind, message: string, label: string): Promise<void> {
@@ -49,7 +50,7 @@ export class Runner {
     const models = [cfg.get<string>('model'), cfg.get<string>('fallbackModel')].filter((m): m is string => !!m && !m.startsWith('<'));
     const runId = `run-${++this.seq}`;
     const abort = new AbortController();
-    this.active = { abort, runId, attemptId: runId, allowCommands: false, approved: new Set() };
+    this.active = { abort, runId, attemptId: runId, allowCommands: false, approved: new Set(), ranTests: false };
     this.ui.begin(label);
     let input = message;
     if (kind === 'forge-agent') {
@@ -67,8 +68,14 @@ export class Runner {
           if (abort.signal.aborted) return;
           this.active.attemptId = `${runId}#${m}.${t}`;
           this.ui.status(`${model}${t ? ` (retry ${t}/${BACKOFF_MS.length})` : ''}: working…`, 'info');
-          const r = await this.attempt(spec, input, abort.signal);
+          let r = await this.attempt(spec, input, abort.signal);
           if (abort.signal.aborted || r.status === 'cancelled') return;
+          // Never finish untested: if this run wrote files but never ran tests, ask once more in the same session.
+          if (r.status === 'done' && kind === 'forge-agent' && !this.active.ranTests && this.review.lastRunId() === runId && r.sessionId) {
+            this.ui.status('Edits applied but no tests were run: asking the agent to run them.', 'info');
+            r = await this.attempt(spec, 'You applied edits but did not run any tests. Run the relevant tests now with run_command (pytest on the test file you changed). If they fail, fix the code with propose_edit and run them again. Then give the final summary.', abort.signal, r.sessionId);
+            if (abort.signal.aborted || r.status === 'cancelled') return;
+          }
           if (r.status === 'done') {
             this.ui.status(`Done on ${model}${m ? ' (fallback)' : ''}.`, 'ok');
             return;
@@ -106,7 +113,7 @@ export class Runner {
     this.ui.status(`Stopped.${undone.length ? ` Rolled back ${undone.join(', ')}.` : ' Nothing was written.'}${clean ? ' Workspace clean ✓ (git status)' : ''}`, 'ok');
   }
 
-  private async attempt(spec: any, message: string, signal: AbortSignal): Promise<TurnResult> {
+  private async attempt(spec: any, message: string, signal: AbortSignal, sessionId?: string): Promise<TurnResult> {
     // Per-attempt controller so a stalled model can be abandoned without stopping the run.
     const own = new AbortController();
     const onAbort = () => own.abort();
@@ -125,7 +132,7 @@ export class Runner {
         },
         onApproval: calls => this.approve(calls),
         onSession: id => { if (this.active) this.active.sessionId = id; },
-      }, own.signal);
+      }, own.signal, sessionId);
       if (own.signal.aborted && !signal.aborted) return { ...r, status: 'error', error: `no response from the model within ${FIRST_EVENT_TIMEOUT_MS / 1000}s` };
       return r;
     } catch (e) {

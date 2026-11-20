@@ -29,7 +29,12 @@ Source of truth: [PRD.md](PRD.md) §6 (build order). Tick an item only when its 
 - [x] **5. Retry/fallback (Task C).** Gate: invalid key, then auto fallback diff, then reject, then clean.
   - Verified (`scripts/e2e.sh taskC`): primary `anthropic/claude-haiku-5-5` (invalid key in TrueForge) -> 401, retry 1s, retry 3s, auto switch to `openai/gpt-5-4-mini`; diff in 8.7 s; `git status` clean before decision; both hunks rejected -> clean.
   - Video: since the Anthropic key really is invalid, record Task C by setting `forge.model` to the Anthropic model (shown in Settings) and `forge.fallbackModel` to gpt-5-4-mini. Show the TrueForge Models page with the bad key blurred.
-- [ ] **6. ContextEngine + receipt + scout instructions + run_command (Task B).** Gate: 3 of 3 rehearsals touch ≥3 files, pytest green, masked JSON, subagent visible in session.
+- [x] **6. ContextEngine + receipt + scout instructions + run_command (Task B).** Gate: 3 of 3 rehearsals touch ≥3 files, pytest green, masked JSON, subagent visible in session.
+  - Verified (`scripts/e2e.sh taskB`, runs 7–9 all pass, 61–139 s): CHANGES.rst, docs/cli.rst, src/flask/cli.py, tests/test_cli.py changed; 59 passed; `config` in `flask --help`; masked JSON; subagent thread; Undo run -> clean.
+  - `src/context.ts`: tf-idf retrieval + link expansion (module -> tests -> docs -> changelog), 8k budget, 2,991 tok on Task B; Context Receipt in the panel (✓/✗, source, tokens, reason, meter, live "read" marks).
+  - Fixed: approvals arriving via TrueForge's `call_tool` wrapper were not recognised (edits bypassed review; handler still refused to write). Now unwrapped, and unknown approvals fail closed.
+  - Added: if a run applied edits but never ran pytest, Forge sends one follow-up turn in the same session asking for tests (run 1 had shipped a timedelta JSON bug untested).
+  - Drafted early: `docs/writeup.md` (TODOs: team, video link, costs, timestamps), `docs/RECORDING.md` (shot list), `demo/demo_app.py`.
 - [ ] **7. Extras 1–3** (guard, badges, why-this-hunk), only if 1–6 pass. Then feature freeze.
 - [ ] **8. Record video** per PRD §4. Gate: every clause in PRD §2 visible.
 - [ ] **9. Write-up PDF** per PRD §5, scorecard timestamps from the final cut.

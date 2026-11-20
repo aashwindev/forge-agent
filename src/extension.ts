@@ -91,7 +91,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     vscode.commands.registerCommand('forge.stop', () => runner.stop()),
 
     // Internal, used by the end-to-end tests to drive the same UI a user clicks.
-    vscode.commands.registerCommand('forge._state', () => ({ busy: runner.busy, reviews: review.snapshot(), transcript: panel.transcript.slice(-60) })),
+    vscode.commands.registerCommand('forge._state', () => ({ busy: runner.busy, reviews: review.snapshot(), transcript: panel.transcript.slice(-400) })),
     vscode.commands.registerCommand('forge._send', (text: string) => panel.onSend?.(text)),
 
     vscode.commands.registerCommand('forge.undo', async () => {

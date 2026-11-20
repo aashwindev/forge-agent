@@ -1,0 +1,98 @@
+# Forge Agent: TrueFoundry Forge-a-thon, Round 1
+
+*Every change reviewed, every choice explained, every failure survived.*
+Repo: https://github.com/aashwindev/forge-agent · Video: TODO_VIDEO_URL
+
+## 1. Team
+
+TODO: names, college or employer, GitHub handles. Techfest Team ID: TODO.
+
+## 2. Starting point
+
+From scratch (no upstream fork). MIT licence. Third-party code is used only as npm dependencies (section 7).
+
+## 3. Architecture on TrueForge
+
+```
+VS Code extension (TypeScript)
+ ├─ ForgeClient       @truefoundry/trueforge-sdk: sessions, streamed turns, approvals, cancel, retry/fallback
+ ├─ Editor MCP server 127.0.0.1:<random port>, Streamable HTTP, per-launch bearer token
+ ├─ ContextEngine     idf retrieval + link expansion + 8k-token packing → Context Receipt
+ ├─ ReviewController  per-hunk diff review, apply accepted hunks only, run journal, undo
+ └─ Panel (webview)   streaming text, tool feed, Context Receipt, status/fallback banner
+TrueForge (local, :8790) runs the agent loop, calls the model, calls our MCP server
+```
+
+**The agent loop runs only in TrueForge.** The extension creates sessions and turns with the SDK and renders the streamed events (`model.message.delta`, `tool.approval_required`, `thread.created`, `turn.done`). It never talks to a model provider. Model names are settings, and TrueForge resolves them. The agent definitions are committed as `agent/forge-agent.json` (agent mode) and `agent/forge-inline.json` (inline edit). The extension registers both through TrueForge's agents API on start-up.
+
+**Editor capabilities are MCP tools.** On activation the extension starts an MCP server and registers it in TrueForge as `forge-editor`:
+
+| Tool | What it does | Gate |
+|---|---|---|
+| `search_code(query)` | idf-ranked files with matching lines (≤12 files) | none |
+| `find_symbol(name)` | definitions + references (≤20) | none |
+| `read_file(path, start?, end?)` | reads the live editor buffer (unsaved text included) | none |
+| `propose_edit(path, old_text, new_text, reason)` | applies **only the hunks the user accepted** | TrueForge approval |
+| `run_command(command, args)` | no shell; allowlist pytest/python/flask/git read-only | TrueForge approval |
+
+Every tool is jailed to the workspace and refuses `.git` and secrets files.
+
+**TrueForge tool approval drives the diff review.** `propose_edit` has `require_approval_for_tools`. When TrueForge pauses with `tool.approval_required`, the extension reads the call arguments, checks the edit with a guard (`old_text` must exist exactly once; Python must still parse), and opens a diff with ✓/✗ CodeLens on every hunk. If at least one hunk is accepted, we send `user.tool_approval: allow`. TrueForge then calls our `propose_edit`, which writes only the accepted hunks and returns "applied [1,3], rejected [2]" to the agent. If every hunk is rejected, we send `deny` with a reason, and nothing touches disk until then. Approvals also unwrap TrueForge's `call_tool` wrapper for deferred tools, and they fail closed on anything unexpected.
+
+**Context-engineering features in use:**
+
+- **Dynamic subagents:** the root agent always starts one exploration subagent, which is visible as its own thread in the TrueForge session.
+- **Deferred tool loading:** search tools are discovered with `list_tools` / `call_tool`.
+- **Context compaction** and **large-tool-response handling** for long runs.
+
+We did not use Code Mode or skills, because both need the sandbox and the editor tools must run in the editor process.
+
+**Stop and resilience.** Stop aborts the client stream, calls `sessions.cancel`, drops pending proposals, and rolls back this run's applied hunks from the journal. It then shows `git status` as clean. If a turn errors, or no event arrives within 20 s, we retry the primary model (1 s, then 3 s backoff), then open a new session on the fallback model with the same input. Each failed attempt is rolled back first.
+
+## 4. How context is selected
+
+1. **Automatic retrieval before turn 1 (model-independent).** The request is tokenised (stopwords dropped). Every text file is scored with BM25-style saturating term frequency × idf, ×2 when a request term is the file name (`cli` → `cli.py`).
+2. **Link expansion.** The top 2 implementation files are seeds. Each one pulls in `tests/test_<module>.py`, the docs page of the same name (`docs/<module>.rst`), and the project changelog. This is how Task B finds `tests/test_cli.py`, `docs/cli.rst` and `CHANGES.rst` without being told.
+3. **Budget packing.** Outlines (signatures for code, headings for docs, newest entries for the changelog), best first, into a fixed **8,000-token budget**. Anything that does not fit, or ranks lower, is listed as **excluded with a reason**. On Task B the pack uses 2,991 / 8,000 tokens and lists 10 included and 5 excluded files.
+4. **Scout subagent.** It verifies the pack with `search_code` / `find_symbol` / `read_file` and returns ranked files with reasons, so the root agent never sees raw search dumps.
+5. **Context Receipt (panel).** The receipt shows every file with ✓/✗, its source (auto / linked / agent), tokens, the reason, and a budget meter. Rows are marked "read" live as the agent opens files. The receipt is built only from real retrieval results and tool calls.
+
+**Trade-offs.** Lexical scoring is fast, has no dependencies and is explainable, but it can miss synonyms. Link expansion follows the naming conventions most Python projects use. Outlines rather than bodies keep the pack small, and the agent reads full files itself.
+
+## 5. Model setup
+
+| Role | Model | Where it ran | Rough cost |
+|---|---|---|---|
+| Primary (all three tasks) | `openai/gpt-5-4-mini` | OpenAI API via local TrueForge 0.185.1 | TODO per Task B run; Task A < TODO |
+| Fallback (Task C) | `openai/gpt-5-4-mini` | same | — |
+| Misconfigured primary (Task C) | `anthropic/claude-haiku-5-5` with an invalid key | TrueForge → 401 | 0 |
+| Small-model check (live re-run) | `openai/gpt-5-4-nano` | same | TODO |
+
+To switch models: add or choose a model in TrueForge Settings → Models, then set `forge.model` / `forge.fallbackModel` in VS Code settings. Nothing in the extension is provider-specific.
+
+## 6. Scorecard
+
+| Row | Timestamp | Claim |
+|---|---|---|
+| A1 Inline edit | TODO | Task A: select, Ctrl/Cmd+Alt+K, diff with per-hunk ✓ (A) and ✗ (C) |
+| A2 Agent mode | TODO | Task B: 4 files found and edited unprompted (cli.py, test_cli.py, cli.rst, CHANGES.rst) |
+| A3 Streaming + cancel | TODO | tokens stream live; Stop halts in < 50 ms, `git status` clean |
+| B1 Context | TODO | Context Receipt: budget meter, reasons, exclusions, live during Task B |
+| B2 Diff safety | TODO | per-hunk review; Forge: Undo (A) and Undo run (B) restore, `git status` clean |
+| B3 Resilience | TODO | Task C: 401 → retry 1/2 → retry 2/2 → automatic fallback, no clicks, clean |
+| B4 TrueForge | TODO | session view: forge-editor MCP calls, approval events, subagent thread |
+| C1 Video | — | A → B → C in order, each verified on screen |
+| C2 Write-up | — | this document |
+
+## 7. Tools used
+
+VS Code Extension API; TrueForge (local) and `@truefoundry/trueforge-sdk`; `@modelcontextprotocol/sdk`; `zod`; `diff`; esbuild; TypeScript. AI coding assistant: Claude Code (Claude Opus 5.5), used for writing and testing the code.
+
+## 8. Known limitations and what we would do with another month
+
+- **Syntax guard is Python-only.** Other languages get only the "`old_text` must exist exactly once" check. Next: tree-sitter for every language.
+- **Retrieval is lexical.** Next: local embeddings combined with BM25, and import-graph link expansion instead of naming conventions.
+- **Fallback opens a new session**, so the fallback model starts from the same input but not from the failed session's history. Next: contribute native model fallback to TrueForge.
+- **The model sometimes needs a second nudge.** If a run applied edits but never ran tests, Forge asks it once more, in the same session, to run them.
+- **Undo is in-memory.** The run journal does not survive a VS Code restart. Git is the backstop.
+- **One workspace folder.** Multi-root workspaces use the first folder.
