@@ -8,6 +8,7 @@ import { Runner } from './runner';
 import { makeTools, runCommand } from './tools';
 import { Workspace } from './workspace';
 import { Footprint } from './badges';
+import { complete, resolveMentions } from './mentions';
 
 // Extension = TrueForge client + editor MCP server + review UI.
 // TrueForge runs the agent loop; nothing here calls a model provider.
@@ -75,6 +76,8 @@ export async function activate(ctx: vscode.ExtensionContext) {
     runner.start('forge-agent', text, text.length > 80 ? text.slice(0, 80) + '…' : text);
   };
   panel.onStop = () => runner.stop();
+  panel.onComplete = q => complete(ws, q);
+  panel.onOpen = url => void vscode.env.openExternal(vscode.Uri.parse(url));
 
   ctx.subscriptions.push(
     { dispose: () => { void mcp?.close(); mcp = undefined; } },
@@ -92,7 +95,11 @@ export async function activate(ctx: vscode.ExtensionContext) {
       const first = sel.start.line + 1, last = sel.end.line + (sel.end.character === 0 && sel.end.line > sel.start.line ? 0 : 1);
       const selected = ed.document.getText(new vscode.Range(sel.start.line, 0, last, 0));
       const lang = ed.document.languageId;
-      const message = `File: ${rel}\nSelected lines ${first}-${last}:\n\`\`\`${lang}\n${selected}\`\`\`\n\nInstruction: ${instruction}`;
+      // @file / @symbol in the instruction are pinned as extra context.
+      const { found } = await resolveMentions(ws, instruction);
+      const pinned = found.map(m => `\n\nMentioned by the user: ${m.kind === 'symbol' ? `${m.path}#${m.token}` : m.path}\n\`\`\`\n${m.body}\n\`\`\``).join('');
+      const message = `File: ${rel}\nSelected lines ${first}-${last}:\n\`\`\`${lang}\n${selected}\`\`\`${pinned}\n\nInstruction: ${instruction}`;
+      if (found.length) panel.log('read', `pinned ${found.map(m => '@' + m.token).join(', ')}`);
       await panel.reveal();
       await vscode.window.showTextDocument(ed.document, ed.viewColumn);
       runner.start('forge-inline', message, `Inline · ${rel}:${first}-${last} · ${instruction}`);

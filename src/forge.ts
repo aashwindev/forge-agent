@@ -164,6 +164,11 @@ export class ForgeClient {
     }
   }
 
+  /** Swap the agent spec (e.g. the model) of an existing session. History is kept. */
+  async updateSessionAgent(sessionId: string, spec: any): Promise<void> {
+    await this.api('PATCH', `/sessions/${sessionId}`, { agent: { spec } });
+  }
+
   async cancel(sessionId: string): Promise<void> {
     try { await this.client.sessions.cancel(sessionId); } catch { /* already finished */ }
   }

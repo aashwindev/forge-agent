@@ -40,6 +40,11 @@ Source of truth: [PRD.md](PRD.md) §6 (build order). Tick an item only when its 
   - Regression after the extras: taskA ok (diff 5.2 s, badge `applied`), taskC ok (fallback, diff 8.1 s, clean), cancel ok (30 ms / 72 ms, clean).
   - **Feature freeze.** From here on: video, write-up, submission only.
 - [x] Small-model check (PRD §8.3): Task A passes on `openai/gpt-5-4-nano` (diff 3.1 s, 2 hunks, `False`, undo clean).
+- [x] **Competitor + rules audit (after freeze, by request).** Re-read the rules PDF; compared the 12 strongest of 43 competitor repos.
+  - Closed a mandatory gap: **@file/@symbol mentions** (panel autocomplete, inline edit, pinned first in the budget, receipt rows).
+  - Fallback now continues **in the same TrueForge session** (PATCH agent spec; verified the history carries over), plus a mid-stream stall watchdog (150 s, paused while the user reviews); total failure rolls back the run.
+  - Clear message if a file changed after review; ↗ Open in TrueForge link per run; 14 unit tests + GitHub Actions CI; README rubric→evidence table + CI badge; ARCHITECTURE.md; write-up heading 8 exact wording.
+  - Live regression after all of it: taskA ok (3.0 s), taskC ok (same-session fallback), cancel ok (28 ms / 35 ms), taskB ok (3 files, 60 passed, masked, subagent).
 - [ ] **8. Record video** per PRD §4. Gate: every clause in PRD §2 visible.
 - [ ] **9. Write-up PDF** per PRD §5, scorecard timestamps from the final cut.
   - [x] `docs/writeup.md` drafted, measured costs filled in. Left: team details, video URL, timestamps, then PDF.

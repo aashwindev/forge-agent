@@ -32,7 +32,8 @@ export async function run() {
     // 2. Accept the first edit (it is written to disk), then stop at the next review: must roll back.
     await vscode.commands.executeCommand('forge._send', TASK_B);
     await until('first review', async () => (await state()).reviews.length > 0, 240_000);
-    await decideAll(() => 'accepted');
+    // A batch opens its review tabs one by one: keep accepting until nothing is pending.
+    await until('first batch accepted', async () => { await decideAll(() => 'accepted'); await sleep(700); const s = await state(); return !s.reviews.some((r: any) => r.state.includes('pending')); }, 60_000).catch(() => undefined);
     const applied = await until('first edit written', async () => gitStatus() || undefined, 60_000).catch(() => '');
     res['afterAccept.gitStatus'] = applied;
     note(`after accepting first edit, git status: "${applied}"`);

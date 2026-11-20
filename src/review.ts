@@ -183,6 +183,7 @@ export class ReviewController implements vscode.TextDocumentContentProvider, vsc
     if (!accepted) return 'Not applied: this edit was not reviewed by the user. Propose it again.';
     this.decided.delete(key);
     const before = await this.ws.read(args.path);
+    if (args.old_text && !before.includes(args.old_text)) return `Not applied: ${args.path} changed after it was reviewed and old_text is no longer in it. Read the file again and propose the edit again.`;
     const target = before === '' && args.old_text === '' ? args.new_text : before.replace(args.old_text, () => args.new_text);
     const hunks = computeHunks(before, target);
     const after = applyHunks(before, hunks, i => accepted.has(i));

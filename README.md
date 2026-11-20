@@ -1,17 +1,32 @@
 # Forge Agent
 
+[![ci](https://github.com/aashwindev/forge-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/aashwindev/forge-agent/actions/workflows/ci.yml) ![licence MIT](https://img.shields.io/badge/licence-MIT-blue)
+
 *Every change reviewed, every choice explained, every failure survived.*
 
 A VS Code coding agent whose agent loop runs on [TrueForge](https://github.com/truefoundry/trueforge). Built for the TrueFoundry Forge-a-thon (Techfest, IIT Bombay 2026-27).
 
 - **Inline edit:** select code, press **Cmd/Ctrl+Alt+K**, and describe the change. The diff opens with ✓ Accept / ✗ Reject on every hunk.
 - **Agent mode:** describe a feature in the Forge panel without naming files. Forge finds the code, tests, docs and changelog, proposes edits to each, and runs the tests.
-- **Context Receipt:** every file considered, why it was picked or left out, and its tokens against an 8k budget.
+- **Context you can see:** type `@` to pin files or symbols. Forge also retrieves on its own, and the **Context Receipt** shows every file considered, why it was picked or left out, and its tokens against an 8k budget.
 - **Safe by construction:** TrueForge tool approval drives the review, and only accepted hunks are written. **Forge: Undo Last Change / Undo Last Run** restore files.
 - **Stop anytime:** the run halts, pending proposals are dropped, and this run's writes are rolled back. `git status` stays clean.
-- **Survives model failure:** Forge retries, then switches automatically to a second model, and failed attempts are rolled back.
+- **Survives model failure:** Forge retries with backoff, then switches automatically to a second model in the **same TrueForge session**, so history and accepted edits are kept. If everything fails, the run is rolled back.
 
 **Starting point:** from scratch (no upstream fork). MIT licence.
+
+## Rubric → where to see it
+
+| Criterion | What Forge does | Proof in this repo |
+|---|---|---|
+| A1 Inline edit | Select, **Cmd/Ctrl+Alt+K**, plain-language instruction. Diff opens with ✓/✗ on **each hunk** | `src/review.ts`, `src/hunks.ts`; e2e `taskA` (2 hunks, `False`); also passes on `gpt-5-4-nano` |
+| A2 Agent mode | One request in the panel → TrueForge tool loop → **4 files found and edited unprompted** in Task B | e2e `taskB`: 3/3 runs change `cli.py`, `test_cli.py`, `cli.rst`, `CHANGES.rst`; pytest green; masked JSON |
+| A3 Streaming + cancel | Tokens stream from `model.message.delta`. Stop aborts, cancels the session, drops proposals, **rolls back applied hunks** | e2e `cancel`: mid-stream stop 24–30 ms; stop after an accepted edit 44–72 ms, `git status` clean |
+| B1 Context | `@file`/`@symbol` + tf-idf retrieval + link expansion (code → tests → docs → changelog), **8k budget**, Context Receipt with reasons and exclusions | `src/context.ts`, `src/mentions.ts`; unit tests; [write-up §4](docs/writeup.md) |
+| B2 Diff safety | Nothing is written until a hunk is accepted. Edit guard (unique `old_text`, Python must parse). **Undo Last Change / Undo Last Run** | e2e `taskA` (undo → clean), `taskB` (undo run → clean); unit tests |
+| B3 Resilience | Retry 1 s / 3 s → **automatic fallback** in the same session, plus a stall watchdog; workspace unchanged | e2e `taskC`: invalid key → 401 ×3 → fallback → reject → `git status` clean |
+| B4 TrueForge | Editor tools are **MCP tools**. **TrueForge tool approval drives the review**. Exploration **subagent**, deferred tool loading, compaction | `src/mcpServer.ts`, `agent/*.json`, `src/forge.ts`; ↗ Open in TrueForge link on every run |
+| C1/C2 | Video and write-up | [docs/writeup.md](docs/writeup.md), [docs/RECORDING.md](docs/RECORDING.md) |
 
 ## Setup (from a clean clone)
 
@@ -60,9 +75,17 @@ The extension never calls a model provider. See [docs/writeup.md](docs/writeup.m
 | Forge: Stop | Cmd/Ctrl+Alt+. |
 | Forge: Ask Agent (open panel) · Undo Last Change · Undo Last Run · Doctor · Accept/Reject All Hunks | palette |
 
+In the panel, type `@` to pin a file or symbol (autocomplete). Every run shows **↗ Open in TrueForge** for its session.
+
 Settings: `forge.baseUrl`, `forge.model`, `forge.fallbackModel`, `forge.autoApproveCommands` (read-only git commands run without a prompt).
 
 ## Tests
+
+```
+npm test            # 14 unit tests (workspace jail, edit guard, command allowlist, retrieval, budget, @mentions, hunks); runs in CI
+```
+
+End to end, each in a real, isolated VS Code window against live TrueForge:
 
 ```
 scripts/e2e.sh taskA  ../forge-agent-flask-rehearsal   # inline edit, accept per hunk, verify False, undo

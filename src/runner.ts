@@ -11,7 +11,7 @@ import { ContextPack, buildContextPack } from './context';
 export interface RunUI {
   begin(label: string): void;
   text(delta: string): void;
-  log(kind: 'tool' | 'read' | 'guard' | 'subagent' | 'info' | 'session', text: string): void;
+  log(kind: 'tool' | 'read' | 'guard' | 'subagent' | 'info' | 'session', text: string, url?: string): void;
   status(text: string, tone: 'info' | 'warn' | 'error' | 'ok'): void;
   end(): void;
   /** Context Receipt: what the editor packed before the turn, and (via receiptRead) what the agent read. */
@@ -20,6 +20,7 @@ export interface RunUI {
 
 const BACKOFF_MS = [1000, 3000];
 const FIRST_EVENT_TIMEOUT_MS = 20_000;
+const IDLE_TIMEOUT_MS = 150_000; // longer than the 120 s run_command timeout
 
 export class Runner {
   private active?: { abort: AbortController; sessionId?: string; attemptId: string; runId: string; allowCommands: boolean; approved: Set<string>; ranTests: boolean };
@@ -60,6 +61,10 @@ export class Runner {
     }
 
     try {
+      // One TrueForge session per run. Retries and the fallback continue in it (model swapped via PATCH),
+      // so the conversation and the user's accepted edits survive a model failure.
+      let session: string | undefined;
+      let lastError = '';
       for (let m = 0; m < models.length; m++) {
         const model = models[m];
         const spec = loadAgentDef(this.agentDir, kind, model).manifest;
@@ -68,29 +73,43 @@ export class Runner {
           if (abort.signal.aborted) return;
           this.active.attemptId = `${runId}#${m}.${t}`;
           this.ui.status(`${model}${t ? ` (retry ${t}/${BACKOFF_MS.length})` : ''}: working…`, 'info');
-          let r = await this.attempt(spec, input, abort.signal);
+          let r: TurnResult | undefined;
+          if (session) {
+            try {
+              if (/no (response|event)/.test(lastError)) await this.forge.cancel(session); // a stalled turn may still be running
+              await this.forge.updateSessionAgent(session, spec);
+              r = await this.attempt(spec, `The previous attempt failed (${lastError}). You are now running on ${model}. Continue the original request above from where it stopped. Edits the user already accepted are on disk; read files again before changing them.`, abort.signal, session);
+            } catch (e) {
+              this.ui.log('info', `Could not continue session ${session} (${(e as Error).message}); starting a new one.`);
+              await this.review.discardAll();
+              await this.review.undo(runId, true);
+              session = undefined;
+            }
+          }
+          if (!r) r = await this.attempt(spec, input, abort.signal);
+          session = this.active.sessionId ?? session;
           if (abort.signal.aborted || r.status === 'cancelled') return;
           // Never finish untested: if this run wrote files but never ran tests, ask once more in the same session.
-          if (r.status === 'done' && kind === 'forge-agent' && !this.active.ranTests && this.review.lastRunId() === runId && r.sessionId) {
+          if (r.status === 'done' && kind === 'forge-agent' && !this.active.ranTests && this.review.lastRunId() === runId && session) {
             this.ui.status('Edits applied but no tests were run: asking the agent to run them.', 'info');
-            r = await this.attempt(spec, 'You applied edits but did not run any tests. Run the relevant tests now with run_command (pytest on the test file you changed). If they fail, fix the code with propose_edit and run them again. Then give the final summary.', abort.signal, r.sessionId);
+            r = await this.attempt(spec, 'You applied edits but did not run any tests. Run the relevant tests now with run_command (pytest on the test file you changed). If they fail, fix the code with propose_edit and run them again. Then give the final summary.', abort.signal, session);
             if (abort.signal.aborted || r.status === 'cancelled') return;
           }
           if (r.status === 'done') {
-            this.ui.status(`Done on ${model}${m ? ' (fallback)' : ''}.`, 'ok');
+            this.ui.status(`Done on ${model}${m ? ' (fallback, same TrueForge session)' : ''}.`, 'ok');
             return;
           }
-          // Failed attempt: roll back anything it wrote, so retries start clean.
           await this.review.discardAll();
-          const undone = await this.review.undo(this.active.attemptId);
-          const why = shortError(r.error);
+          const why = lastError = shortError(r.error);
           if (t < tries - 1) {
-            this.ui.status(`${model} failed: ${why}. Retrying in ${BACKOFF_MS[t] / 1000}s…${undone.length ? ` (rolled back ${undone.length} file(s))` : ''}`, 'warn');
+            this.ui.status(`${model} failed: ${why}. Retrying in ${BACKOFF_MS[t] / 1000}s…`, 'warn');
             await sleep(BACKOFF_MS[t], abort.signal);
           } else if (m < models.length - 1) {
-            this.ui.status(`${model} failed: ${why}. Switching automatically to fallback model ${models[m + 1]}.`, 'warn');
+            this.ui.status(`${model} failed: ${why}. Switching automatically to fallback model ${models[m + 1]} in the same TrueForge session (history kept).`, 'warn');
           } else {
-            this.ui.status(`All configured models failed (last: ${why}). No files were changed. Check TrueForge Settings → Models.`, 'error');
+            // Nothing worked: leave the workspace exactly as it was before the run.
+            const undone = await this.review.undo(runId, true);
+            this.ui.status(`All configured models failed (last: ${why}). ${undone.length ? `Rolled back ${[...new Set(undone)].join(', ')}.` : 'No files were changed.'} Check TrueForge Settings → Models.`, 'error');
           }
         }
       }
@@ -119,28 +138,34 @@ export class Runner {
     const onAbort = () => own.abort();
     signal.addEventListener('abort', onAbort);
     let sawEvent = false;
-    const stall = setTimeout(() => { if (!sawEvent) own.abort(); }, FIRST_EVENT_TIMEOUT_MS);
+    let stalled = '';
+    const stall = setTimeout(() => { if (!sawEvent) { stalled = `no response from the model within ${FIRST_EVENT_TIMEOUT_MS / 1000}s`; own.abort(); } }, FIRST_EVENT_TIMEOUT_MS);
+    // Mid-stream watchdog: the stream went silent while the model was working (not while the user reviews).
+    let idle: NodeJS.Timeout | undefined;
+    const kick = () => { clearTimeout(idle); idle = setTimeout(() => { stalled = `no event from the model for ${IDLE_TIMEOUT_MS / 1000}s`; own.abort(); }, IDLE_TIMEOUT_MS); };
     try {
       const r = await this.forge.runTurn(spec, message, {
         onText: (d, thread) => { if (thread === 'main') this.ui.text(d); },
         onEvent: e => {
-          if (e.type === 'turn.created') { sawEvent = true; this.ui.log('session', `TrueForge session ${this.active?.sessionId ?? ''}`); }
+          if (sawEvent) kick();
+          if (e.type === 'turn.created') { sawEvent = true; kick(); const sid = this.active?.sessionId ?? ''; this.ui.log('session', `TrueForge session ${sid}`, `${this.forge.baseUrl}/sessions/${sid}`); }
           if (e.type === 'model.message.delta') sawEvent = true;
           if (e.type === 'thread.created') this.ui.log('subagent', `Subagent started: ${e.title ?? e.agentInfo?.name ?? ''}`);
           if (e.type === 'thread.done') this.ui.log('subagent', `Subagent finished: ${e.title ?? ''}`);
           if (e.type === 'thread.context_compaction_started') this.ui.log('info', 'TrueForge is compacting context…');
         },
-        onApproval: calls => this.approve(calls),
+        onApproval: async calls => { clearTimeout(idle); try { return await this.approve(calls); } finally { kick(); } },
         onSession: id => { if (this.active) this.active.sessionId = id; },
       }, own.signal, sessionId);
-      if (own.signal.aborted && !signal.aborted) return { ...r, status: 'error', error: `no response from the model within ${FIRST_EVENT_TIMEOUT_MS / 1000}s` };
+      if (own.signal.aborted && !signal.aborted) return { ...r, status: 'error', error: stalled };
       return r;
     } catch (e) {
       if (signal.aborted) return { sessionId: '', status: 'cancelled' };
-      if (own.signal.aborted) return { sessionId: '', status: 'error', error: `no response from the model within ${FIRST_EVENT_TIMEOUT_MS / 1000}s` };
+      if (own.signal.aborted) return { sessionId: '', status: 'error', error: stalled };
       return { sessionId: '', status: 'error', error: (e as Error).message };
     } finally {
       clearTimeout(stall);
+      clearTimeout(idle);
       signal.removeEventListener('abort', onAbort);
     }
   }

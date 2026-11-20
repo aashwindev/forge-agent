@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { terms } from './tools';
 import { Workspace, estimateTokens } from './workspace';
+import { resolveMentions } from './mentions';
 
 // Automatic retrieval before the first turn, independent of the model:
 // 1. score every file by idf-weighted overlap with the request;
@@ -14,7 +15,7 @@ const SEEDS = 2;
 const MAX_CANDIDATES = 10;
 const OUTLINE_LINES = 60;
 
-export interface ReceiptRow { path: string; source: 'auto' | 'linked' | 'agent'; reason: string; tokens: number; included: boolean }
+export interface ReceiptRow { path: string; source: 'mention' | 'auto' | 'linked' | 'agent'; reason: string; tokens: number; included: boolean }
 export interface ContextPack { message: string; rows: ReceiptRow[]; used: number; budget: number; strategy: string }
 
 const isTest = (p: string) => /(^|\/)tests?\//.test(p) || /(^|\/)test_[^/]+\.py$/.test(p);
@@ -68,7 +69,17 @@ export async function buildContextPack(ws: Workspace, request: string, budget = 
   const rows: ReceiptRow[] = [];
   const blocks: string[] = [];
   let used = 0;
+  // Explicit @file / @symbol mentions are pinned first and charged to the same budget.
+  const { found, missing } = await resolveMentions(ws, request);
+  for (const m of found) {
+    const label = m.kind === 'symbol' ? `${m.path}#${m.token}` : m.path;
+    const fits = used + m.tokens <= budget;
+    rows.push({ path: label, source: 'mention', reason: fits ? `you mentioned @${m.token}` : `you mentioned @${m.token}; over budget (${m.tokens} tok), agent must read it`, tokens: m.tokens, included: fits });
+    if (fits) { used += m.tokens; blocks.push(`### ${label} (mentioned by the user, ${m.kind === 'symbol' ? 'full definition' : 'file'})\n${m.body}`); }
+  }
+  for (const t of missing) rows.push({ path: '@' + t, source: 'mention', reason: 'no file or symbol with this name', tokens: 0, included: false });
   for (const p of picks) {
+    if (found.some(m => m.kind === 'file' && m.path === p.f)) continue;
     const body = outline(p.f, texts.get(p.f)!);
     const tokens = estimateTokens(body);
     const fits = used + tokens <= budget;
@@ -80,7 +91,7 @@ export async function buildContextPack(ws: Workspace, request: string, budget = 
     if (!picks.some(p => p.f === s.f)) rows.push({ path: s.f, source: 'auto', reason: `left out: weaker match (${s.hits.slice(0, 3).join(', ')}) than the files above`, tokens: 0, included: false });
   }
 
-  const strategy = `idf-ranked retrieval, top ${SEEDS} implementation files expanded to their tests, docs page and the changelog; outlines packed into ${budget} tokens`;
+  const strategy = `@mentions pinned first, then idf-ranked retrieval, top ${SEEDS} implementation files expanded to their tests, docs page and the changelog; outlines packed into ${budget} tokens`;
   const message = [
     `Context pack (chosen by the editor before this turn: ${strategy}; ${used}/${budget} tokens). These are outlines only: read_file before editing. Other files may matter too.`,
     ...blocks,

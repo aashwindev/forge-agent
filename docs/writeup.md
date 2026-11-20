@@ -47,10 +47,13 @@ Every tool is jailed to the workspace and refuses `.git` and secrets files.
 
 We did not use Code Mode or skills, because both need the sandbox and the editor tools must run in the editor process.
 
-**Stop and resilience.** Stop aborts the client stream, calls `sessions.cancel`, drops pending proposals, and rolls back this run's applied hunks from the journal. It then shows `git status` as clean. If a turn errors, or no event arrives within 20 s, we retry the primary model (1 s, then 3 s backoff), then open a new session on the fallback model with the same input. Each failed attempt is rolled back first.
+**Stop and resilience.** Stop aborts the client stream, calls `sessions.cancel`, drops pending proposals, and rolls back this run's applied hunks from the journal. It then shows `git status` as clean (measured 24–72 ms).
+
+A run fails over when a turn errors, when no event arrives within 20 s, or when a running stream goes silent for 150 s; the user's review time does not count. Forge then retries the primary model (1 s, then 3 s backoff) and switches automatically to the fallback model. The switch happens **in the same TrueForge session**: we `PATCH` the session's agent spec to the fallback model and send a continuation turn. The conversation history and the hunks the user already accepted carry over; a test showed the fallback model answering from a message sent during the failed turn. If the session cannot be continued, Forge rolls back this run's writes and starts a new session. If every model fails, the run's writes are rolled back, so the workspace is exactly as before.
 
 ## 4. How context is selected
 
+0. **Explicit mentions.** Type `@` in the panel for autocomplete over files and symbols (`@cli.py`, `@get_debug_flag`). A mentioned file is pinned whole, and a mentioned symbol is pinned as its full definition with decorators. Both come first and are charged to the budget. Unknown mentions show in the receipt as "no file or symbol with this name". Inline edit accepts the same mentions.
 1. **Automatic retrieval before turn 1 (model-independent).** The request is tokenised (stopwords dropped). Every text file is scored with BM25-style saturating term frequency × idf, ×2 when a request term is the file name (`cli` → `cli.py`).
 2. **Link expansion.** The top 2 implementation files are seeds. Each one pulls in `tests/test_<module>.py`, the docs page of the same name (`docs/<module>.rst`), and the project changelog. This is how Task B finds `tests/test_cli.py`, `docs/cli.rst` and `CHANGES.rst` without being told.
 3. **Budget packing.** Outlines (signatures for code, headings for docs, newest entries for the changelog), best first, into a fixed **8,000-token budget**. Anything that does not fit, or ranks lower, is listed as **excluded with a reason**. On Task B the pack uses 2,991 / 8,000 tokens and lists 10 included and 5 excluded files.
@@ -79,22 +82,22 @@ To switch models: add or choose a model in TrueForge Settings → Models, then s
 | A1 Inline edit | TODO | Task A: select, Ctrl/Cmd+Alt+K, diff with per-hunk ✓ (A) and ✗ (C) |
 | A2 Agent mode | TODO | Task B: 4 files found and edited unprompted (cli.py, test_cli.py, cli.rst, CHANGES.rst) |
 | A3 Streaming + cancel | TODO | tokens stream live; Stop halts in < 100 ms (measured 24–72 ms), `git status` clean |
-| B1 Context | TODO | Context Receipt: budget meter, reasons, exclusions, live during Task B |
+| B1 Context | TODO | Context Receipt during Task B: @mentions pinned, auto-retrieved files with reasons, exclusions, 8k budget meter |
 | B2 Diff safety | TODO | per-hunk review; Forge: Undo (A) and Undo run (B) restore, `git status` clean |
-| B3 Resilience | TODO | Task C: 401 → retry 1/2 → retry 2/2 → automatic fallback, no clicks, clean |
+| B3 Resilience | TODO | Task C: 401 → retry 1/2 → retry 2/2 → automatic fallback in the same TrueForge session, no clicks, `git status` clean |
 | B4 TrueForge | TODO | session view: forge-editor MCP calls, approval events, subagent thread |
 | C1 Video | — | A → B → C in order, each verified on screen |
 | C2 Write-up | — | this document |
 
 ## 7. Tools used
 
-VS Code Extension API; TrueForge (local) and `@truefoundry/trueforge-sdk`; `@modelcontextprotocol/sdk`; `zod`; `diff`; esbuild; TypeScript. AI coding assistant: Claude Code (Claude Opus 5.5), used for writing and testing the code.
+VS Code Extension API; TrueForge (local) and `@truefoundry/trueforge-sdk`; `@modelcontextprotocol/sdk`; `zod`; `diff`; esbuild; TypeScript; Node's built-in test runner. Testing: 14 unit tests, run in CI on every push, plus four end-to-end scenarios (`scripts/e2e.sh`). Each scenario drives a real, isolated VS Code window against live TrueForge and checks the outcome with `git status`, pytest and the Flask CLI. AI coding assistant: Claude Code (Claude Opus 5.5), used for writing and testing the code.
 
-## 8. Known limitations and what we would do with another month
+## 8. Known limitations and what you would do with another month
 
 - **Syntax guard is Python-only.** Other languages get only the "`old_text` must exist exactly once" check. Next: tree-sitter for every language.
 - **Retrieval is lexical.** Next: local embeddings combined with BM25, and import-graph link expansion instead of naming conventions.
-- **Fallback opens a new session**, so the fallback model starts from the same input but not from the failed session's history. Next: contribute native model fallback to TrueForge.
+- **Fallback is client-driven.** The extension swaps the session's model and sends a continuation turn, so the failed turn stays in the session as an error. Next: a TrueForge PR for native, per-agent fallback models, so every TrueForge client gets this.
 - **The model sometimes needs a second nudge.** If a run applied edits but never ran tests, Forge asks it once more, in the same session, to run them.
 - **Undo is in-memory.** The run journal does not survive a VS Code restart. Git is the backstop.
 - **One workspace folder.** Multi-root workspaces use the first folder.
