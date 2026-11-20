@@ -43,12 +43,16 @@
     "watch": "npm run build -- --watch"
   },
   "devDependencies": {
+    "@types/diff": "^5.2.3",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.90.0",
     "esbuild": "^0.24.0",
     "typescript": "^5.6.0"
   },
   "dependencies": {
-    "@truefoundry/trueforge-sdk": "latest"
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@truefoundry/trueforge-sdk": "latest",
+    "diff": "^5.2.2",
+    "zod": "^3.25.76"
   }
 }

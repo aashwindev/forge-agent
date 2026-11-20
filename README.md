@@ -7,7 +7,7 @@ Forge-a-thon (Techfest, IIT Bombay 2026-27).
 **Starting point:** from scratch (no upstream fork). Editor plumbing uses the VS Code API only.
 
 ## Setup (from a clean clone)
-1. `npx @truefoundry/trueforge@latest` — starts TrueForge in local mode at http://localhost:8790
+1. `OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge@latest` starts TrueForge in local mode at http://localhost:8790. The variable lets TrueForge reach the extension's MCP server on loopback (TrueForge blocks private addresses by default); nothing else is opened up.
 2. In TrueForge: Settings -> Models, add two providers and keys (keys live in TrueForge, never in this repo). Defaults: `openai/gpt-5-4-mini` (primary) and `anthropic/claude-haiku-5-5` (fallback, on a different provider so one bad key cannot take out both).
 3. `npm install && npm run build`
 4. Open this folder in VS Code, press F5 (Extension Development Host).
