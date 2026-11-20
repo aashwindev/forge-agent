@@ -41,7 +41,7 @@ export class Runner {
   commandAllowed(line: string): boolean {
     const a = this.active;
     const ok = isAutoApproved(line) || (!!a && (a.allowCommands || a.approved.delete(line)));
-    if (ok && a && /^(pytest|python3? -m pytest)\b/.test(line)) a.ranTests = true;
+    if (ok && a && /^(pytest|python3? -m (pytest|unittest)|npm (run )?test|node --test|go test|cargo test)\b/.test(line)) a.ranTests = true;
     return ok;
   }
 
@@ -94,7 +94,7 @@ export class Runner {
           // Never finish untested: if this run wrote files but never ran tests, ask once more in the same session.
           if (r.status === 'done' && kind === 'ledgerforge-agent' && !this.active.ranTests && this.review.lastRunId() === runId && session) {
             this.ui.status('Edits applied but no tests were run: asking the agent to run them.', 'info');
-            r = await this.attempt(spec, 'You applied edits but did not run any tests. Run the relevant tests now with run_command (pytest on the test file you changed). If they fail, fix the code with propose_edit and run them again. Then give the final summary.', abort.signal, session);
+            r = await this.attempt(spec, 'You applied edits but did not run any tests. Run the relevant tests now with run_command (the test runner this project uses, on the test file you changed). If they fail, fix the code with propose_edit and run them again. Then give the final summary.', abort.signal, session);
             if (abort.signal.aborted || r.status === 'cancelled') return;
           }
           if (r.status === 'done') {
