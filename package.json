@@ -5,18 +5,36 @@
   "version": "0.0.1",
   "publisher": "forge-agent",
   "license": "MIT",
-  "engines": { "vscode": "^1.90.0" },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
   "main": "./dist/extension.js",
   "activationEvents": [],
   "contributes": {
     "commands": [
-      { "command": "forge.ask", "title": "Forge: Ask Agent" }
+      {
+        "command": "forge.ask",
+        "title": "Forge: Ask Agent"
+      }
     ],
     "configuration": {
       "title": "Forge Agent",
       "properties": {
-        "forge.baseUrl": { "type": "string", "default": "http://localhost:8790", "description": "TrueForge server URL (local mode)" },
-        "forge.model": { "type": "string", "default": "anthropic/claude-sonnet-4-6", "description": "Model name as configured in TrueForge Settings -> Models" }
+        "forge.baseUrl": {
+          "type": "string",
+          "default": "http://localhost:8790",
+          "description": "TrueForge server URL (local mode)"
+        },
+        "forge.model": {
+          "type": "string",
+          "default": "openai/gpt-5-4-mini",
+          "description": "Primary model, by its name in TrueForge Settings -> Models"
+        },
+        "forge.fallbackModel": {
+          "type": "string",
+          "default": "anthropic/claude-haiku-5-5",
+          "description": "Second model TrueForge switches to automatically if the primary fails. Use a different provider so one bad key cannot take out both."
+        }
       }
     }
   },
