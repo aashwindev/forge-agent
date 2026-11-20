@@ -18,7 +18,7 @@ export async function startMcpServer(tools: ToolSpec[], onCall: (name: string, a
     if (req.method !== 'POST') { res.writeHead(405, { Allow: 'POST' }).end(); return; }
 
     // Stateless: a fresh MCP server per request keeps cancellation and restarts trivial.
-    const mcp = new McpServer({ name: 'forge-editor', version: '0.1.0' });
+    const mcp = new McpServer({ name: 'ledgerforge-editor', version: '0.1.0' });
     for (const t of tools) {
       mcp.registerTool(
         t.name,

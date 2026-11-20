@@ -5,9 +5,9 @@ import { TrueForge, isEventDelta, mergeEventDelta } from '@truefoundry/trueforge
 // Thin client over TrueForge. TrueForge owns the agent loop; this file only
 // creates sessions, streams turns, answers approval pauses, and cancels.
 
-export const MCP_SERVER_NAME = 'forge-editor';
+export const MCP_SERVER_NAME = 'ledgerforge-editor';
 
-export type AgentKind = 'forge-agent' | 'forge-inline';
+export type AgentKind = 'ledgerforge-agent' | 'ledgerforge-inline';
 
 export interface PendingCall {
   threadId: string;

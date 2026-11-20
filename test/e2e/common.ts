@@ -4,7 +4,7 @@ import { execFileSync } from 'child_process';
 
 export const root = () => vscode.workspace.workspaceFolders![0].uri.fsPath;
 export const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-export const state = () => vscode.commands.executeCommand<any>('forge._state');
+export const state = () => vscode.commands.executeCommand<any>('ledgerforge._state');
 export const log: string[] = [];
 export const note = (s: string) => { log.push(`${new Date().toISOString().slice(11, 19)} ${s}`); };
 
@@ -36,7 +36,7 @@ export async function decideAll(decide: (path: string, i: number) => 'accepted' 
       if (r.state[i] !== 'pending') continue;
       const d = decide(r.path, i);
       note(`${d === 'accepted' ? 'accept' : 'reject'} ${r.path} hunk ${i + 1}/${r.state.length}`);
-      await vscode.commands.executeCommand('forge.hunk', r.uri, i, d);
+      await vscode.commands.executeCommand('ledgerforge.hunk', r.uri, i, d);
       await sleep(300);
     }
   }

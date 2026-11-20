@@ -24,7 +24,7 @@ async function main() {
   await forge.ping();
   await forge.registerMcp(mcp.url, mcp.token);
   console.log('registered', mcp.url, 'tools:', (await forge.listMcpTools()).join(', '));
-  const agentKind = kind === 'inline' ? 'forge-inline' : 'forge-agent';
+  const agentKind = kind === 'inline' ? 'ledgerforge-inline' : 'ledgerforge-agent';
   await forge.upsertAgent(path.resolve(__dirname, '../agent'), agentKind, model);
   const spec = loadAgentDef(path.resolve(__dirname, '../agent'), agentKind, model).manifest;
   const t0 = Date.now();

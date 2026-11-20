@@ -1,23 +1,23 @@
-# Forge Agent
+# LedgerForge
 
-[![ci](https://github.com/aashwindev/forge-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/aashwindev/forge-agent/actions/workflows/ci.yml) ![licence MIT](https://img.shields.io/badge/licence-MIT-blue)
+[![ci](https://github.com/aashwindev/ledgerforge/actions/workflows/ci.yml/badge.svg)](https://github.com/aashwindev/ledgerforge/actions/workflows/ci.yml) ![licence MIT](https://img.shields.io/badge/licence-MIT-blue)
 
 *Every change reviewed, every choice explained, every failure survived.*
 
 A VS Code coding agent whose agent loop runs on [TrueForge](https://github.com/truefoundry/trueforge). Built for the TrueFoundry Forge-a-thon (Techfest, IIT Bombay 2026-27).
 
 - **Inline edit:** select code, press **Cmd/Ctrl+Alt+K**, and describe the change. The diff opens with ✓ Accept / ✗ Reject on every hunk.
-- **Agent mode:** describe a feature in the Forge panel without naming files. Forge finds the code, tests, docs and changelog, proposes edits to each, and runs the tests.
-- **Context you can see:** type `@` to pin files or symbols. Forge also retrieves on its own, and the **Context Receipt** shows every file considered, why it was picked or left out, and its tokens against an 8k budget.
-- **Safe by construction:** TrueForge tool approval drives the review, and only accepted hunks are written. **Forge: Undo Last Change / Undo Last Run** restore files.
+- **Agent mode:** describe a feature in the LedgerForge panel without naming files. LedgerForge finds the code, tests, docs and changelog, proposes edits to each, and runs the tests.
+- **Context you can see:** type `@` to pin files or symbols. LedgerForge also retrieves on its own, and the **Context Receipt** shows every file considered, why it was picked or left out, and its tokens against an 8k budget.
+- **Safe by construction:** TrueForge tool approval drives the review, and only accepted hunks are written. **LedgerForge: Undo Last Change / Undo Last Run** restore files.
 - **Stop anytime:** the run halts, pending proposals are dropped, and this run's writes are rolled back. `git status` stays clean.
-- **Survives model failure:** Forge retries with backoff, then switches automatically to a second model in the **same TrueForge session**, so history and accepted edits are kept. If everything fails, the run is rolled back.
+- **Survives model failure:** LedgerForge retries with backoff, then switches automatically to a second model in the **same TrueForge session**, so history and accepted edits are kept. If everything fails, the run is rolled back.
 
 **Starting point:** from scratch (no upstream fork). MIT licence.
 
 ## Rubric → where to see it
 
-| Criterion | What Forge does | Proof in this repo |
+| Criterion | What LedgerForge does | Proof in this repo |
 |---|---|---|
 | A1 Inline edit | Select, **Cmd/Ctrl+Alt+K**, plain-language instruction. Diff opens with ✓/✗ on **each hunk** | `src/review.ts`, `src/hunks.ts`; e2e `taskA` (2 hunks, `False`); also passes on `gpt-5-4-nano` |
 | A2 Agent mode | One request in the panel → TrueForge tool loop → **4 files found and edited unprompted** in Task B | e2e `taskB`: 3/3 runs change `cli.py`, `test_cli.py`, `cli.rst`, `CHANGES.rst`; pytest green; masked JSON |
@@ -35,20 +35,20 @@ A VS Code coding agent whose agent loop runs on [TrueForge](https://github.com/t
    OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge@latest
    ```
    It serves http://localhost:8790. The variable lets TrueForge reach the extension's MCP server on loopback (TrueForge blocks private addresses by default). Nothing else is opened up.
-2. In TrueForge, go to **Settings → Models** and add a provider and key. Keys live only in TrueForge, never in this repo. Defaults are `openai/gpt-5-4-mini` (primary) and `openai/gpt-5-4-nano` (fallback), so one OpenAI key is enough. Any model TrueForge serves works: set `forge.model` / `forge.fallbackModel` in VS Code settings (see `forge.config.example.json`), e.g. a local model behind an OpenAI-compatible endpoint.
+2. In TrueForge, go to **Settings → Models** and add a provider and key. Keys live only in TrueForge, never in this repo. Defaults are `openai/gpt-5-4-mini` (primary) and `openai/gpt-5-4-nano` (fallback), so one OpenAI key is enough. Any model TrueForge serves works: set `ledgerforge.model` / `ledgerforge.fallbackModel` in VS Code settings (see `ledgerforge.config.example.json`), e.g. a local model behind an OpenAI-compatible endpoint.
 3. Build:
    ```
    npm install && npm run build
    ```
 4. Open this folder in VS Code and press **F5**. The Extension Development Host opens `../forge-agent-flask-rehearsal` (edit `.vscode/launch.json` to change it).
-5. The Forge panel (activity bar) shows **Connected to TrueForge**. Run **Forge: Doctor** to check TrueForge, the MCP tools and both models.
+5. The LedgerForge panel (activity bar) shows **Connected to TrueForge**. Run **LedgerForge: Doctor** to check TrueForge, the MCP tools and both models.
 
 ### Loading the agent definition
 
-The agent definitions are `agent/forge-agent.json` (agent mode) and `agent/forge-inline.json` (inline edit). The extension registers them in TrueForge automatically on start-up and on every request, together with its MCP server `forge-editor`. To load one by hand, for example to inspect it in the TrueForge UI:
+The agent definitions are `agent/ledgerforge-agent.json` (agent mode) and `agent/ledgerforge-inline.json` (inline edit). The extension registers them in TrueForge automatically on start-up and on every request, together with its MCP server `ledgerforge-editor`. To load one by hand, for example to inspect it in the TrueForge UI:
 
 ```
-sed 's/{{MODEL}}/openai\/gpt-5-4-mini/' agent/forge-agent.json \
+sed 's/{{MODEL}}/openai\/gpt-5-4-mini/' agent/ledgerforge-agent.json \
   | curl -s -X POST -H 'content-type: application/json' --data @- http://localhost:8790/api/v1/agents
 ```
 
@@ -71,13 +71,13 @@ The extension never calls a model provider. See [docs/writeup.md](docs/writeup.m
 
 | Command | Key |
 |---|---|
-| Forge: Inline Edit Selection | Cmd/Ctrl+Alt+K |
-| Forge: Stop | Cmd/Ctrl+Alt+. |
-| Forge: Ask Agent (open panel) · Undo Last Change · Undo Last Run · Doctor · Accept/Reject All Hunks | palette |
+| LedgerForge: Inline Edit Selection | Cmd/Ctrl+Alt+K |
+| LedgerForge: Stop | Cmd/Ctrl+Alt+. |
+| LedgerForge: Ask Agent (open panel) · Undo Last Change · Undo Last Run · Doctor · Accept/Reject All Hunks | palette |
 
 In the panel, type `@` to pin a file or symbol (autocomplete). Every run shows **↗ Open in TrueForge** for its session.
 
-Settings: `forge.baseUrl`, `forge.model`, `forge.fallbackModel`, `forge.autoApproveCommands` (read-only git commands run without a prompt).
+Settings: `ledgerforge.baseUrl`, `ledgerforge.model`, `ledgerforge.fallbackModel`, `ledgerforge.autoApproveCommands` (read-only git commands run without a prompt).
 
 ## Tests
 

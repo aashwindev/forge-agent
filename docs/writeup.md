@@ -1,6 +1,6 @@
-# Forge Agent: TrueFoundry Forge-a-thon, Round 1
+# LedgerForge: TrueFoundry Forge-a-thon, Round 1
 
-*Every change reviewed, every choice explained, every failure survived.* Repo: https://github.com/aashwindev/forge-agent · Video: TODO_VIDEO_URL
+*Every change reviewed, every choice explained, every failure survived.* Repo: https://github.com/aashwindev/ledgerforge · Video: TODO_VIDEO_URL
 
 ## 1. Team
 
@@ -22,7 +22,7 @@ VS Code extension (TypeScript)
 TrueForge (local) runs the agent loop, calls the model, calls our MCP server
 ```
 
-**The loop runs in TrueForge.** The extension creates sessions and turns with the SDK and renders the streamed events. It never calls a model provider. Agent definitions are committed as `agent/forge-agent.json` and `agent/forge-inline.json`; the extension registers them through TrueForge's agents API, together with its MCP server `forge-editor`.
+**The loop runs in TrueForge.** The extension creates sessions and turns with the SDK and renders the streamed events. It never calls a model provider. Agent definitions are committed as `agent/ledgerforge-agent.json` and `agent/ledgerforge-inline.json`; the extension registers them through TrueForge's agents API, together with its MCP server `ledgerforge-editor`.
 
 | MCP tool | What it does | Gate |
 |---|---|---|
@@ -39,7 +39,7 @@ All tools are jailed to the workspace and refuse `.git` and secrets files.
 
 **Stop.** Stop aborts the stream, calls `sessions.cancel`, closes pending reviews and rolls back the run's applied hunks from the journal. Measured: 24–72 ms, `git status` clean.
 
-**Fallback.** Triggers on a turn error, no first event within 20 s, or a stream silent for 150 s (time spent reviewing is excluded). Forge retries the primary model after 1 s and 3 s, then `PATCH`es the **same session** to the fallback model and sends a continuation turn. History and accepted edits carry over. If every model fails, the run is rolled back.
+**Fallback.** Triggers on a turn error, no first event within 20 s, or a stream silent for 150 s (time spent reviewing is excluded). LedgerForge retries the primary model after 1 s and 3 s, then `PATCH`es the **same session** to the fallback model and sends a continuation turn. History and accepted edits carry over. If every model fails, the run is rolled back.
 
 ## 4. How context is selected
 
@@ -60,7 +60,7 @@ All tools are jailed to the workspace and refuse `.git` and secrets files.
 | Fallback | `openai/gpt-5-4-nano` (Task C: `gpt-5-4-mini`) | same key | Task A < $0.001 |
 | Task C primary | `local-ollama/qwen3-coder`: custom OpenAI-compatible provider at `127.0.0.1:11434/v1`, server not running | unreachable (`ECONNREFUSED`) | $0 |
 
-Prices: $0.75 input, $0.075 cached input, $4.50 output per 1M tokens. All rehearsals together cost a few dollars. To switch models, pick any model in TrueForge **Settings → Models** and set `forge.model` / `forge.fallbackModel`. Nothing in the extension is provider-specific.
+Prices: $0.75 input, $0.075 cached input, $4.50 output per 1M tokens. All rehearsals together cost a few dollars. To switch models, pick any model in TrueForge **Settings → Models** and set `ledgerforge.model` / `ledgerforge.fallbackModel`. Nothing in the extension is provider-specific.
 
 ## 6. Scorecard
 
@@ -72,7 +72,7 @@ Prices: $0.75 input, $0.075 cached input, $4.50 output per 1M tokens. All rehear
 | B1 Context | TODO | Context Receipt in Task B: chosen and excluded files with reasons, 8k budget meter |
 | B2 Diff safety | TODO | per-hunk review; Undo (A) and Undo Run (B) restore files, `git status` clean |
 | B3 Resilience | TODO | endpoint unreachable → 2 retries → automatic fallback in the same session, no clicks, clean |
-| B4 TrueForge | TODO | session: forge-editor MCP calls, approval events, subagent thread |
+| B4 TrueForge | TODO | session: ledgerforge-editor MCP calls, approval events, subagent thread |
 | C1 Video | — | A → B → C in order, each verified on screen |
 | C2 Write-up | — | this document |
 
@@ -85,6 +85,6 @@ VS Code Extension API, TrueForge and `@truefoundry/trueforge-sdk`, `@modelcontex
 - **The syntax guard covers Python only.** Next: tree-sitter for all languages.
 - **Retrieval is lexical.** Next: embeddings combined with BM25, and import-graph links instead of naming conventions.
 - **Fallback is client-driven.** The failed turn stays in the session as an error. Next: a TrueForge PR adding native per-agent fallback models.
-- **Models sometimes skip tests.** Forge then asks once more to run them; we would enforce this in the agent definition instead.
+- **Models sometimes skip tests.** LedgerForge then asks once more to run them; we would enforce this in the agent definition instead.
 - **Undo history is lost on restart.** The run journal lives in memory; git is the backstop.
 - **One workspace folder only.**

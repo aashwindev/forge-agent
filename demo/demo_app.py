@@ -1,4 +1,4 @@
-# Tiny app for the Task B check: `flask --app ../forge-agent/demo/demo_app.py config`
+# Tiny app for the Task B check: `flask --app ../ledgerforge/demo/demo_app.py config`
 # The values are fake on purpose; the command must print them as "***".
 from flask import Flask
 

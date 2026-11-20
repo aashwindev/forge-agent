@@ -20,11 +20,11 @@ export async function activate(ctx: vscode.ExtensionContext) {
   const panel = new ForgePanel();
   ctx.subscriptions.push(vscode.window.registerWebviewViewProvider(ForgePanel.id, panel, { webviewOptions: { retainContextWhenHidden: true } }));
   if (!folder) {
-    panel.status('Open a folder to use Forge.', 'warn');
+    panel.status('Open a folder to use LedgerForge.', 'warn');
     return;
   }
 
-  const cfg = () => vscode.workspace.getConfiguration('forge');
+  const cfg = () => vscode.workspace.getConfiguration('ledgerforge');
   const forge = new ForgeClient(cfg().get<string>('baseUrl') ?? 'http://localhost:8790');
   const agentDir = path.join(ctx.extensionPath, 'agent');
   const ws = new Workspace(folder.uri.fsPath, abs => vscode.workspace.textDocuments.find(d => d.uri.scheme === 'file' && d.uri.fsPath === abs)?.getText());
@@ -57,7 +57,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
       });
     }
     await forge.registerMcp(mcp.url, mcp.token);
-    for (const kind of ['forge-agent', 'forge-inline'] as const) await forge.upsertAgent(agentDir, kind, cfg().get<string>('model')!);
+    for (const kind of ['ledgerforge-agent', 'ledgerforge-inline'] as const) await forge.upsertAgent(agentDir, kind, cfg().get<string>('model')!);
     return forge.listMcpTools();
   };
 
@@ -73,7 +73,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
   panel.onSend = async text => {
     if (!(await ensure())) return;
-    runner.start('forge-agent', text, text.length > 80 ? text.slice(0, 80) + '…' : text);
+    runner.start('ledgerforge-agent', text, text.length > 80 ? text.slice(0, 80) + '…' : text);
   };
   panel.onStop = () => runner.stop();
   panel.onComplete = q => complete(ws, q);
@@ -82,13 +82,13 @@ export async function activate(ctx: vscode.ExtensionContext) {
   ctx.subscriptions.push(
     { dispose: () => { void mcp?.close(); mcp = undefined; } },
 
-    vscode.commands.registerCommand('forge.ask', () => panel.reveal()),
+    vscode.commands.registerCommand('ledgerforge.ask', () => panel.reveal()),
 
-    vscode.commands.registerCommand('forge.inlineEdit', async (given?: string) => {
+    vscode.commands.registerCommand('ledgerforge.inlineEdit', async (given?: string) => {
       const ed = vscode.window.activeTextEditor;
       if (!ed || ed.document.uri.scheme !== 'file') return;
       const sel = ed.selection.isEmpty ? ed.document.lineAt(ed.selection.active.line).range : ed.selection;
-      const instruction = typeof given === 'string' ? given : await vscode.window.showInputBox({ prompt: 'Forge: what should change in the selection?', placeHolder: 'e.g. handle None input', ignoreFocusOut: true });
+      const instruction = typeof given === 'string' ? given : await vscode.window.showInputBox({ prompt: 'LedgerForge: what should change in the selection?', placeHolder: 'e.g. handle None input', ignoreFocusOut: true });
       if (!instruction) return;
       if (!(await ensure())) return;
       const rel = ws.rel(ed.document.uri.fsPath);
@@ -102,40 +102,40 @@ export async function activate(ctx: vscode.ExtensionContext) {
       if (found.length) panel.log('read', `pinned ${found.map(m => '@' + m.token).join(', ')}`);
       await panel.reveal();
       await vscode.window.showTextDocument(ed.document, ed.viewColumn);
-      runner.start('forge-inline', message, `Inline · ${rel}:${first}-${last} · ${instruction}`);
+      runner.start('ledgerforge-inline', message, `Inline · ${rel}:${first}-${last} · ${instruction}`);
     }),
 
-    vscode.commands.registerCommand('forge.stop', () => runner.stop()),
+    vscode.commands.registerCommand('ledgerforge.stop', () => runner.stop()),
 
     // Internal, used by the end-to-end tests to drive the same UI a user clicks.
-    vscode.commands.registerCommand('forge._state', () => ({ busy: runner.busy, reviews: review.snapshot(), badges: footprint.snapshot(), transcript: panel.transcript.slice(-400) })),
-    vscode.commands.registerCommand('forge._send', (text: string) => panel.onSend?.(text)),
+    vscode.commands.registerCommand('ledgerforge._state', () => ({ busy: runner.busy, reviews: review.snapshot(), badges: footprint.snapshot(), transcript: panel.transcript.slice(-400) })),
+    vscode.commands.registerCommand('ledgerforge._send', (text: string) => panel.onSend?.(text)),
 
-    vscode.commands.registerCommand('forge.undo', async () => {
+    vscode.commands.registerCommand('ledgerforge.undo', async () => {
       const restored = await review.undo();
-      panel.status(restored.length ? `Undid the last Forge change to ${restored[0]}.` : 'Nothing to undo.', restored.length ? 'ok' : 'info');
+      panel.status(restored.length ? `Undid the last LedgerForge change to ${restored[0]}.` : 'Nothing to undo.', restored.length ? 'ok' : 'info');
     }),
 
-    vscode.commands.registerCommand('forge.undoRun', async () => {
+    vscode.commands.registerCommand('ledgerforge.undoRun', async () => {
       const id = review.lastRunId();
       const restored = id ? await review.undo(id, true) : [];
       const clean = await gitClean(ws);
       panel.status(restored.length ? `Undid the last run: restored ${[...new Set(restored)].join(', ')}.${clean ? ' Workspace clean ✓ (git status)' : ''}` : 'Nothing to undo.', restored.length ? 'ok' : 'info');
     }),
 
-    vscode.commands.registerCommand('forge.doctor', async () => {
+    vscode.commands.registerCommand('ledgerforge.doctor', async () => {
       await panel.reveal();
-      panel.begin('Forge: Doctor');
+      panel.begin('LedgerForge: Doctor');
       try {
         const t = await connect();
         panel.log('info', `TrueForge reachable at ${forge.baseUrl}`);
         panel.log('info', `MCP server ${mcp?.url} registered; tools: ${t.join(', ')}`);
-        panel.log('info', `Agents loaded from ${agentDir}: forge-agent, forge-inline`);
+        panel.log('info', `Agents loaded from ${agentDir}: ledgerforge-agent, ledgerforge-inline`);
         const available = await forge.listModels();
         for (const key of ['model', 'fallbackModel']) {
           const m = cfg().get<string>(key)!;
           if (!available.includes(m)) { panel.log('guard', `${key} ${m} is not configured in TrueForge`); continue; }
-          const r = await forge.runTurn({ ...loadAgentDef(agentDir, 'forge-inline', m).manifest, mcp_servers: [] }, 'Reply with the single word OK.', { onApproval: async () => [] });
+          const r = await forge.runTurn({ ...loadAgentDef(agentDir, 'ledgerforge-inline', m).manifest, mcp_servers: [] }, 'Reply with the single word OK.', { onApproval: async () => [] });
           panel.log(r.status === 'done' ? 'info' : 'guard', `${key} ${m}: ${r.status === 'done' ? 'answers ✓' : 'FAILED — ' + (r.error ?? r.status)}`);
         }
         panel.status('Doctor finished.', 'ok');
@@ -147,7 +147,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     }),
   );
 
-  void vscode.commands.executeCommand('setContext', 'forge.proposalScheme', SCHEME);
+  void vscode.commands.executeCommand('setContext', 'ledgerforge.proposalScheme', SCHEME);
 }
 
 async function gitClean(ws: Workspace): Promise<boolean> {

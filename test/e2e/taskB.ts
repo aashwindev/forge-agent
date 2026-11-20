@@ -15,7 +15,7 @@ export async function run() {
     note(`git status before: "${gitStatus()}"`);
     await until('extension connected', async () => (await state()) !== undefined, 30_000);
     const t0 = Date.now();
-    await vscode.commands.executeCommand('forge._send', INSTRUCTION);
+    await vscode.commands.executeCommand('ledgerforge._send', INSTRUCTION);
     await until('run to start', async () => (await state()).busy, 30_000);
     let reviews = 0;
     await until('run to finish', async () => {
@@ -45,7 +45,7 @@ export async function run() {
     res.subagent = tr.some(l => l.startsWith('subagent: Subagent started'));
     res.receipt = tr.find(l => l.startsWith('receipt:'));
 
-    await vscode.commands.executeCommand('forge.undoRun');
+    await vscode.commands.executeCommand('ledgerforge.undoRun');
     await sleep(1000);
     res.statusAfterUndo = gitStatus();
     note(`git status after Undo run: "${res.statusAfterUndo}"`);

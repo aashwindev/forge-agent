@@ -5,7 +5,7 @@ const TASK_B = 'Add a new built-in CLI command flask config that prints the load
 
 async function stopAndMeasure(label: string, res: Record<string, unknown>) {
   const t0 = Date.now();
-  await vscode.commands.executeCommand('forge.stop');
+  await vscode.commands.executeCommand('ledgerforge.stop');
   await until('run to stop', async () => !(await state()).busy, 15_000);
   const ms = Date.now() - t0;
   const s = await state();
@@ -24,13 +24,13 @@ export async function run() {
     note(`git status before: "${gitStatus()}"`);
 
     // 1. Stop mid-stream, before any proposal.
-    await vscode.commands.executeCommand('forge._send', TASK_B);
+    await vscode.commands.executeCommand('ledgerforge._send', TASK_B);
     await until('run to start', async () => (await state()).busy, 30_000);
     await sleep(4000);
     const a = await stopAndMeasure('midStream', res);
 
     // 2. Accept the first edit (it is written to disk), then stop at the next review: must roll back.
-    await vscode.commands.executeCommand('forge._send', TASK_B);
+    await vscode.commands.executeCommand('ledgerforge._send', TASK_B);
     await until('first review', async () => (await state()).reviews.length > 0, 240_000);
     // A batch opens its review tabs one by one: keep accepting until nothing is pending.
     await until('first batch accepted', async () => { await decideAll(() => 'accepted'); await sleep(700); const s = await state(); return !s.reviews.some((r: any) => r.state.includes('pending')); }, 60_000).catch(() => undefined);

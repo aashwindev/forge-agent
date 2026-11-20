@@ -46,15 +46,15 @@ export class Runner {
   }
 
   async start(kind: AgentKind, message: string, label: string): Promise<void> {
-    if (this.active) { vscode.window.showWarningMessage('Forge is already running. Press Stop first.'); return; }
-    const cfg = vscode.workspace.getConfiguration('forge');
+    if (this.active) { vscode.window.showWarningMessage('LedgerForge is already running. Press Stop first.'); return; }
+    const cfg = vscode.workspace.getConfiguration('ledgerforge');
     const models = [cfg.get<string>('model'), cfg.get<string>('fallbackModel')].filter((m): m is string => !!m && !m.startsWith('<'));
     const runId = `run-${++this.seq}`;
     const abort = new AbortController();
     this.active = { abort, runId, attemptId: runId, allowCommands: false, approved: new Set(), ranTests: false };
     this.ui.begin(label);
     let input = message;
-    if (kind === 'forge-agent') {
+    if (kind === 'ledgerforge-agent') {
       const pack = await buildContextPack(this.ws, message);
       this.ui.receipt?.(pack);
       input = pack.message;
@@ -90,7 +90,7 @@ export class Runner {
           session = this.active.sessionId ?? session;
           if (abort.signal.aborted || r.status === 'cancelled') return;
           // Never finish untested: if this run wrote files but never ran tests, ask once more in the same session.
-          if (r.status === 'done' && kind === 'forge-agent' && !this.active.ranTests && this.review.lastRunId() === runId && session) {
+          if (r.status === 'done' && kind === 'ledgerforge-agent' && !this.active.ranTests && this.review.lastRunId() === runId && session) {
             this.ui.status('Edits applied but no tests were run: asking the agent to run them.', 'info');
             r = await this.attempt(spec, 'You applied edits but did not run any tests. Run the relevant tests now with run_command (pytest on the test file you changed). If they fail, fix the code with propose_edit and run them again. Then give the final summary.', abort.signal, session);
             if (abort.signal.aborted || r.status === 'cancelled') return;
@@ -113,7 +113,7 @@ export class Runner {
           }
         }
       }
-      if (!models.length) this.ui.status('No model configured. Set forge.model in Settings.', 'error');
+      if (!models.length) this.ui.status('No model configured. Set ledgerforge.model in Settings.', 'error');
     } finally {
       this.active = undefined;
       this.ui.end();
@@ -214,7 +214,7 @@ export class Runner {
     // Read-only commands (by default git status/diff/log/show) never change the workspace: no prompt.
     if (isAutoApproved(line)) return true;
     if (this.active?.allowCommands) return true;
-    const pick = await vscode.window.showInformationMessage(`Forge wants to run: ${line}`, 'Allow', 'Allow for this run', 'Deny');
+    const pick = await vscode.window.showInformationMessage(`LedgerForge wants to run: ${line}`, 'Allow', 'Allow for this run', 'Deny');
     if (pick === 'Allow for this run' && this.active) this.active.allowCommands = true;
     const ok = pick === 'Allow' || pick === 'Allow for this run';
     if (ok) this.active?.approved.add(line);
@@ -223,7 +223,7 @@ export class Runner {
 }
 
 function isAutoApproved(line: string): boolean {
-  const auto = vscode.workspace.getConfiguration('forge').get<string[]>('autoApproveCommands') ?? [];
+  const auto = vscode.workspace.getConfiguration('ledgerforge').get<string[]>('autoApproveCommands') ?? [];
   return auto.some(p => line === p || line.startsWith(p + ' '));
 }
 

@@ -6,7 +6,7 @@ TrueForge runs the agent loop and calls the model. The extension is a TrueForge 
 
 1. **Panel or inline edit** (`src/panel.ts`, `src/extension.ts`). The user's text goes to `Runner.start`. Inline edit adds the selected lines and any `@mentions`.
 2. **Context pack** (`src/context.ts`, `src/mentions.ts`). This step is agent mode only. `@file`/`@symbol` mentions are pinned first. tf-idf retrieval then picks seed files, link expansion adds their tests, docs page and changelog, and outlines are packed into 8k tokens. The panel's Context Receipt shows every row with its reason.
-3. **TrueForge session** (`src/forge.ts`). `sessions.create` uses the agent spec from `agent/forge-agent.json` or `agent/forge-inline.json` with the configured model, then `createTurnStream`. Text deltas stream into the panel.
+3. **TrueForge session** (`src/forge.ts`). `sessions.create` uses the agent spec from `agent/ledgerforge-agent.json` or `agent/ledgerforge-inline.json` with the configured model, then `createTurnStream`. Text deltas stream into the panel.
 4. **Tool calls.** TrueForge calls our MCP server (`src/mcpServer.ts`, Streamable HTTP on 127.0.0.1 with a per-launch bearer token). Tools live in `src/tools.ts`, and every path goes through `Workspace.resolve`, the jail in `src/workspace.ts`.
 5. **Approval pause.** `propose_edit` and `run_command` require approval. TrueForge emits `tool.approval_required` and the turn pauses. `Runner.approve`:
    - checks each edit with `validateEdit`, the guard;

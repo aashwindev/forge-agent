@@ -5,9 +5,9 @@ import { Workspace } from './workspace';
 type Mark = 'read' | 'proposed' | 'applied';
 const RANK: Record<Mark, number> = { read: 0, proposed: 1, applied: 2 };
 const LOOK: Record<Mark, vscode.FileDecoration> = {
-  read: new vscode.FileDecoration('👁', 'Forge: read by the agent in this run'),
-  proposed: new vscode.FileDecoration('✎', 'Forge: edit proposed, waiting for review', new vscode.ThemeColor('editorWarning.foreground')),
-  applied: new vscode.FileDecoration('✓', 'Forge: accepted hunks applied in this run', new vscode.ThemeColor('testing.iconPassed')),
+  read: new vscode.FileDecoration('👁', 'LedgerForge: read by the agent in this run'),
+  proposed: new vscode.FileDecoration('✎', 'LedgerForge: edit proposed, waiting for review', new vscode.ThemeColor('editorWarning.foreground')),
+  applied: new vscode.FileDecoration('✓', 'LedgerForge: accepted hunks applied in this run', new vscode.ThemeColor('testing.iconPassed')),
 };
 
 export class Footprint implements vscode.FileDecorationProvider {

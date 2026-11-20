@@ -10,7 +10,7 @@ import { Workspace } from './workspace';
 // 3. We answer allow/deny; TrueForge calls propose_edit on our MCP server ->
 //    apply() writes ONLY the accepted hunks and journals the pre-image.
 
-export const SCHEME = 'forge-proposal';
+export const SCHEME = 'ledgerforge-proposal';
 
 export interface ReviewItem {
   key: string;
@@ -49,9 +49,9 @@ export class ReviewController implements vscode.TextDocumentContentProvider, vsc
     ctx.subscriptions.push(
       vscode.workspace.registerTextDocumentContentProvider(SCHEME, this),
       vscode.languages.registerCodeLensProvider({ scheme: SCHEME }, this),
-      vscode.commands.registerCommand('forge.hunk', (uri: string, i: number, s: HunkState) => this.decide(uri, i, s)),
-      vscode.commands.registerCommand('forge.acceptAll', (u?: vscode.Uri) => this.decideAll(u, 'accepted')),
-      vscode.commands.registerCommand('forge.rejectAll', (u?: vscode.Uri) => this.decideAll(u, 'rejected')),
+      vscode.commands.registerCommand('ledgerforge.hunk', (uri: string, i: number, s: HunkState) => this.decide(uri, i, s)),
+      vscode.commands.registerCommand('ledgerforge.acceptAll', (u?: vscode.Uri) => this.decideAll(u, 'accepted')),
+      vscode.commands.registerCommand('ledgerforge.rejectAll', (u?: vscode.Uri) => this.decideAll(u, 'rejected')),
     );
   }
 
@@ -75,8 +75,8 @@ export class ReviewController implements vscode.TextDocumentContentProvider, vsc
       const tag = `Hunk ${i + 1}/${r.hunks.length}`;
       if (r.state[i] === 'pending') {
         lenses.push(
-          new vscode.CodeLens(range, { title: '$(check) Accept', command: 'forge.hunk', arguments: [doc.uri.toString(), i, 'accepted'] }),
-          new vscode.CodeLens(range, { title: '$(close) Reject', command: 'forge.hunk', arguments: [doc.uri.toString(), i, 'rejected'] }),
+          new vscode.CodeLens(range, { title: '$(check) Accept', command: 'ledgerforge.hunk', arguments: [doc.uri.toString(), i, 'accepted'] }),
+          new vscode.CodeLens(range, { title: '$(close) Reject', command: 'ledgerforge.hunk', arguments: [doc.uri.toString(), i, 'rejected'] }),
           new vscode.CodeLens(range, { title: `${tag}${r.args.reason ? ' · why: ' + r.args.reason : ''}`, command: '' }),
         );
       } else {
@@ -100,7 +100,7 @@ export class ReviewController implements vscode.TextDocumentContentProvider, vsc
       this.open.set(uri.toString(), { ...it, uri, hunks, state: hunks.map(() => 'pending') });
       this.onProposed?.(it.args.path);
       const left = this.ws.exists(it.args.path) ? vscode.Uri.file(this.ws.resolve(it.args.path)) : vscode.Uri.from({ scheme: SCHEME, path: '/' + it.args.path, query: 'empty' });
-      await vscode.commands.executeCommand('vscode.diff', left, uri, `Forge review: ${it.args.path} (${hunks.length} hunk${hunks.length === 1 ? '' : 's'})`, { preview: false });
+      await vscode.commands.executeCommand('vscode.diff', left, uri, `LedgerForge review: ${it.args.path} (${hunks.length} hunk${hunks.length === 1 ? '' : 's'})`, { preview: false });
     }
     this.lensChanged.fire();
     this.report();
@@ -170,7 +170,7 @@ export class ReviewController implements vscode.TextDocumentContentProvider, vsc
   private report() {
     const all = [...this.open.values()];
     const pending = all.reduce((n, r) => n + r.state.filter(s => s === 'pending').length, 0);
-    vscode.commands.executeCommand('setContext', 'forge.reviewing', all.length > 0);
+    vscode.commands.executeCommand('setContext', 'ledgerforge.reviewing', all.length > 0);
     this.onStateChange?.(all.length ? `Review: ${pending} hunk(s) pending in ${all.length} file(s)` : '');
   }
 

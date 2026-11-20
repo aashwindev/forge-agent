@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { RunUI } from './runner';
 import { ContextPack } from './context';
 
-// The agent panel (activity bar → Forge). Streams tokens as TrueForge sends them,
+// The agent panel (activity bar → LedgerForge). Streams tokens as TrueForge sends them,
 // shows a feed of what the agent did, and has Send / Stop.
 
 export class ForgePanel implements vscode.WebviewViewProvider, RunUI {
-  static readonly id = 'forge.panel';
+  static readonly id = 'ledgerforge.panel';
   private view?: vscode.WebviewView;
   private queue: any[] = [];
   /** Plain-text record of the panel (also read by the e2e tests). */
@@ -95,13 +95,13 @@ export function html(n: string) {
   button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
   button:disabled { opacity: 0.5; cursor: default; }
 </style></head><body>
-<div id="status">Ready. Describe a change; Forge finds the files.</div>
+<div id="status">Ready. Describe a change; LedgerForge finds the files.</div>
 <details id="receipt" open hidden><summary>Context Receipt</summary><div class="strategy"></div><div class="meter"><div></div></div><table></table></details>
 <div id="feed"></div>
 <div id="composer">
   <div id="ac"><div id="acl" hidden></div></div>
-  <textarea id="input" placeholder="Ask Forge to change the workspace… (Ctrl/Cmd+Enter to send)"></textarea>
-  <div class="hint">Type @ to pin a file or symbol. Forge also finds files on its own.</div>
+  <textarea id="input" placeholder="Ask LedgerForge to change the workspace… (Ctrl/Cmd+Enter to send)"></textarea>
+  <div class="hint">Type @ to pin a file or symbol. LedgerForge also finds files on its own.</div>
   <div class="row"><button id="send">Send</button><button id="stop" class="secondary" disabled>■ Stop</button></div>
 </div>
 <script nonce="${n}">

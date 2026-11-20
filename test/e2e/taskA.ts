@@ -10,7 +10,7 @@ export async function run() {
   const res: Record<string, unknown> = {};
   let ok = false;
   try {
-    if (process.env.FORGE_MODEL) await vscode.workspace.getConfiguration('forge').update('model', process.env.FORGE_MODEL, vscode.ConfigurationTarget.Global);
+    if (process.env.FORGE_MODEL) await vscode.workspace.getConfiguration('ledgerforge').update('model', process.env.FORGE_MODEL, vscode.ConfigurationTarget.Global);
     note(`git status before: "${gitStatus()}"`);
     const doc = await vscode.workspace.openTextDocument(path.join(root(), 'src/flask/helpers.py'));
     const ed = await vscode.window.showTextDocument(doc);
@@ -22,7 +22,7 @@ export async function run() {
     await until('extension connected', async () => (await state()) !== undefined, 30_000);
 
     const t0 = Date.now();
-    await vscode.commands.executeCommand('forge.inlineEdit', INSTRUCTION);
+    await vscode.commands.executeCommand('ledgerforge.inlineEdit', INSTRUCTION);
     const s = await until('review to open', async () => { const x = await state(); return x.reviews.length ? x : undefined; });
     res.secondsToDiff = (Date.now() - t0) / 1000;
     res.hunks = s.reviews.map((r: any) => `${r.path}: ${r.state.length}`);
@@ -43,10 +43,10 @@ export async function run() {
     const falsy = ['off', 'OFF', 'n', 'N', 'no', '0', 'false'].every(v => (res.verify as any)[v] === 'False');
     const truthy = ['1', 'yes'].every(v => (res.verify as any)[v] === 'True');
 
-    await vscode.commands.executeCommand('forge.undo');
+    await vscode.commands.executeCommand('ledgerforge.undo');
     await sleep(800);
     res.statusAfterUndo = gitStatus();
-    note(`git status after Forge: Undo (must be empty): "${res.statusAfterUndo}"`);
+    note(`git status after LedgerForge: Undo (must be empty): "${res.statusAfterUndo}"`);
     ok = falsy && truthy && res.cleanDuringReview === true && res.statusAfterUndo === '';
   } catch (e) {
     res.error = (e as Error).stack;

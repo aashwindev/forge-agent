@@ -1,0 +1,23 @@
+{
+  "name": "ledgerforge-inline",
+  "description": "LedgerForge inline edit: changes the code region the user selected in VS Code, through an approval-gated propose_edit MCP tool.",
+  "manifest": {
+    "model": { "name": "{{MODEL}}" },
+    "instructions": "You are LedgerForge inline edit. The user selected a region of one file in VS Code and wrote an instruction. The message gives the file path, the selected line range and the selected text.\n\nMake exactly the change the instruction asks for, inside that file, with the propose_edit tool. Copy old_text verbatim from the selected text (or from read_file if you need more of the file), keep everything the instruction does not mention unchanged, and keep the file's style. Prefer one propose_edit call that covers the selected region. Nothing is written until the user accepts each hunk.\n\nAfter the tool result, reply with one short line. If the result says the edit was denied or some hunks were rejected, say exactly what was not applied; never claim a change that was not applied. Do not paste the code in your reply.",
+    "mcp_servers": [
+      {
+        "name": "ledgerforge-editor",
+        "enable_tools": ["read_file", "find_symbol", "search_code", "propose_edit"],
+        "require_approval_for_tools": ["propose_edit"],
+        "preload": true
+      }
+    ],
+    "config": {
+      "iteration_limit": 12,
+      "dynamic_sub_agents": { "enabled": false },
+      "generative_ui": { "enabled": false },
+      "ask_user_questions": { "enabled": false },
+      "sandbox": { "enabled": false }
+    }
+  }
+}

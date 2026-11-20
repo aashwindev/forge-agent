@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Forge Agent",
+      "name": "Run LedgerForge",
       "type": "extensionHost",
       "request": "launch",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}", "${workspaceFolder}/../forge-agent-flask-rehearsal"],

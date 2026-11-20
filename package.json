@@ -1,9 +1,9 @@
 {
-  "name": "forge-agent",
-  "displayName": "Forge Agent",
+  "name": "ledgerforge",
+  "displayName": "LedgerForge",
   "description": "Editor-native coding agent whose loop runs on TrueForge",
   "version": "0.0.1",
-  "publisher": "forge-agent",
+  "publisher": "ledgerforge",
   "license": "MIT",
   "engines": {
     "vscode": "^1.90.0"
@@ -15,60 +15,60 @@
   "contributes": {
     "commands": [
       {
-        "command": "forge.ask",
-        "title": "Forge: Ask Agent (open panel)"
+        "command": "ledgerforge.ask",
+        "title": "LedgerForge: Ask Agent (open panel)"
       },
       {
-        "command": "forge.inlineEdit",
-        "title": "Forge: Inline Edit Selection"
+        "command": "ledgerforge.inlineEdit",
+        "title": "LedgerForge: Inline Edit Selection"
       },
       {
-        "command": "forge.stop",
-        "title": "Forge: Stop",
+        "command": "ledgerforge.stop",
+        "title": "LedgerForge: Stop",
         "icon": "$(debug-stop)"
       },
       {
-        "command": "forge.undo",
-        "title": "Forge: Undo Last Change"
+        "command": "ledgerforge.undo",
+        "title": "LedgerForge: Undo Last Change"
       },
       {
-        "command": "forge.undoRun",
-        "title": "Forge: Undo Last Run"
+        "command": "ledgerforge.undoRun",
+        "title": "LedgerForge: Undo Last Run"
       },
       {
-        "command": "forge.doctor",
-        "title": "Forge: Doctor"
+        "command": "ledgerforge.doctor",
+        "title": "LedgerForge: Doctor"
       },
       {
-        "command": "forge.acceptAll",
-        "title": "Forge: Accept All Hunks",
+        "command": "ledgerforge.acceptAll",
+        "title": "LedgerForge: Accept All Hunks",
         "icon": "$(check-all)"
       },
       {
-        "command": "forge.rejectAll",
-        "title": "Forge: Reject All Hunks",
+        "command": "ledgerforge.rejectAll",
+        "title": "LedgerForge: Reject All Hunks",
         "icon": "$(close-all)"
       }
     ],
     "configuration": {
-      "title": "Forge Agent",
+      "title": "LedgerForge",
       "properties": {
-        "forge.baseUrl": {
+        "ledgerforge.baseUrl": {
           "type": "string",
           "default": "http://localhost:8790",
           "description": "TrueForge server URL (local mode)"
         },
-        "forge.model": {
+        "ledgerforge.model": {
           "type": "string",
           "default": "openai/gpt-5-4-mini",
           "description": "Primary model, by its name in TrueForge Settings -> Models"
         },
-        "forge.fallbackModel": {
+        "ledgerforge.fallbackModel": {
           "type": "string",
           "default": "openai/gpt-5-4-nano",
           "description": "Second model TrueForge switches to automatically if the primary fails. Use a different provider so one bad key cannot take out both."
         },
-        "forge.autoApproveCommands": {
+        "ledgerforge.autoApproveCommands": {
           "type": "array",
           "items": {
             "type": "string"
@@ -85,13 +85,13 @@
     },
     "keybindings": [
       {
-        "command": "forge.inlineEdit",
+        "command": "ledgerforge.inlineEdit",
         "key": "ctrl+alt+k",
         "mac": "cmd+alt+k",
         "when": "editorTextFocus"
       },
       {
-        "command": "forge.stop",
+        "command": "ledgerforge.stop",
         "key": "ctrl+alt+.",
         "mac": "cmd+alt+."
       }
@@ -99,41 +99,41 @@
     "menus": {
       "editor/title": [
         {
-          "command": "forge.acceptAll",
-          "when": "resourceScheme == forge-proposal",
+          "command": "ledgerforge.acceptAll",
+          "when": "resourceScheme == ledgerforge-proposal",
           "group": "navigation"
         },
         {
-          "command": "forge.rejectAll",
-          "when": "resourceScheme == forge-proposal",
+          "command": "ledgerforge.rejectAll",
+          "when": "resourceScheme == ledgerforge-proposal",
           "group": "navigation"
         }
       ],
       "commandPalette": [
         {
-          "command": "forge.acceptAll",
-          "when": "forge.reviewing"
+          "command": "ledgerforge.acceptAll",
+          "when": "ledgerforge.reviewing"
         },
         {
-          "command": "forge.rejectAll",
-          "when": "forge.reviewing"
+          "command": "ledgerforge.rejectAll",
+          "when": "ledgerforge.reviewing"
         }
       ]
     },
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "forge",
-          "title": "Forge",
+          "id": "ledgerforge",
+          "title": "LedgerForge",
           "icon": "media/forge.svg"
         }
       ]
     },
     "views": {
-      "forge": [
+      "ledgerforge": [
         {
           "type": "webview",
-          "id": "forge.panel",
+          "id": "ledgerforge.panel",
           "name": "Agent"
         }
       ]
