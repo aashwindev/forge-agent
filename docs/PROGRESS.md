@@ -26,7 +26,9 @@ Source of truth: [PRD.md](PRD.md) §6 (build order). Tick an item only when its 
 - [x] **4. Cancel + journal rollback.** Gate: Stop mid-run leaves `git status` clean.
   - Verified (`scripts/e2e.sh cancel`): Stop mid-stream in 24 ms, no reviews left, `git status` clean; accept first `cli.py` edit (`M src/flask/cli.py`), Stop at next review in 44 ms -> rolled back, `git status` clean.
   - Commands: read-only git auto-approved (`forge.autoApproveCommands`); the run_command handler itself refuses anything the user did not approve. Agent + subagent told to explore with search_code/read_file only.
-- [ ] **5. Retry/fallback (Task C).** Gate: invalid key, then auto fallback diff, then reject, then clean.
+- [x] **5. Retry/fallback (Task C).** Gate: invalid key, then auto fallback diff, then reject, then clean.
+  - Verified (`scripts/e2e.sh taskC`): primary `anthropic/claude-haiku-5-5` (invalid key in TrueForge) -> 401, retry 1s, retry 3s, auto switch to `openai/gpt-5-4-mini`; diff in 8.7 s; `git status` clean before decision; both hunks rejected -> clean.
+  - Video: since the Anthropic key really is invalid, record Task C by setting `forge.model` to the Anthropic model (shown in Settings) and `forge.fallbackModel` to gpt-5-4-mini. Show the TrueForge Models page with the bad key blurred.
 - [ ] **6. ContextEngine + receipt + scout instructions + run_command (Task B).** Gate: 3 of 3 rehearsals touch ≥3 files, pytest green, masked JSON, subagent visible in session.
 - [ ] **7. Extras 1–3** (guard, badges, why-this-hunk), only if 1–6 pass. Then feature freeze.
 - [ ] **8. Record video** per PRD §4. Gate: every clause in PRD §2 visible.
