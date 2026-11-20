@@ -11,7 +11,7 @@ Every write goes into a run journal, so you can undo one change or a whole run. 
 
 ## 1. Team
 
-**Team Incept** (Techfest Team ID TM-B4A4C352E3C), all from Masters' Union: Aashwin Dev (team lead, GitHub aashwindev), Divyam Jindal, Harman Manik, Jeet Marlecha and Malyadri Chowdary Marneni. Repository: https://github.com/aashwindev/ledgerforge
+**Team Incept** (Techfest Team ID TM-B4A4C352E3C), all from Masters' Union: Aashwin Dev (team lead, @aashwindev), Divyam Jindal (@DivyamJindal), Harman Manik (@Harman206), Jeet Marlecha (@jeetjain1204) and Malyadri Chowdary Marneni (@MalyadriTalentz). Repository: https://github.com/aashwindev/ledgerforge
 
 ## 2. Starting point
 

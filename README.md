@@ -162,7 +162,15 @@ These are stated plainly; details and next steps are in [write-up §8](docs/writ
 
 ## Team Incept
 
-Aashwin Dev (lead) · Divyam Jindal · Harman Manik · Jeet Marlecha · Malyadri Chowdary Marneni · Masters' Union · Techfest Team ID TM-B4A4C352E3C
+| Member | GitHub |
+|---|---|
+| Aashwin Dev (lead) | [aashwindev](https://github.com/aashwindev) |
+| Divyam Jindal | [DivyamJindal](https://github.com/DivyamJindal) |
+| Harman Manik | [Harman206](https://github.com/Harman206) |
+| Jeet Marlecha | [jeetjain1204](https://github.com/jeetjain1204) |
+| Malyadri Chowdary Marneni | [MalyadriTalentz](https://github.com/MalyadriTalentz) |
+
+All from Masters' Union · Techfest Team ID TM-B4A4C352E3C
 
 **Starting point:** from scratch, with no upstream fork. Third-party code is used only as npm dependencies, listed in the write-up §7.
 
