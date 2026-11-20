@@ -35,7 +35,10 @@ Source of truth: [PRD.md](PRD.md) §6 (build order). Tick an item only when its 
   - Fixed: approvals arriving via TrueForge's `call_tool` wrapper were not recognised (edits bypassed review; handler still refused to write). Now unwrapped, and unknown approvals fail closed.
   - Added: if a run applied edits but never ran pytest, Forge sends one follow-up turn in the same session asking for tests (run 1 had shipped a timedelta JSON bug untested).
   - Drafted early: `docs/writeup.md` (TODOs: team, video link, costs, timestamps), `docs/RECORDING.md` (shot list), `demo/demo_app.py`.
-- [ ] **7. Extras 1–3** (guard, badges, why-this-hunk), only if 1–6 pass. Then feature freeze.
+- [x] **7. Extras 1–3** (guard, badges, why-this-hunk), only if 1–6 pass. Then feature freeze.
+  - Guard (step 2) and why-this-hunk (reason shown in the review CodeLens, step 3) were already in. Added `src/badges.ts`: Explorer badges 👁 read / ✎ proposed / ✓ applied for the current run.
+  - Regression after the extras: taskA ok (diff 5.2 s, badge `applied`), taskC ok (fallback, diff 8.1 s, clean), cancel ok (30 ms / 72 ms, clean).
+  - **Feature freeze.** From here on: video, write-up, submission only.
 - [ ] **8. Record video** per PRD §4. Gate: every clause in PRD §2 visible.
 - [ ] **9. Write-up PDF** per PRD §5, scorecard timestamps from the final cut.
 - [ ] **10. Clean-clone README check, secrets grep, links public (incognito), submit form.**

@@ -40,6 +40,8 @@ export class ReviewController implements vscode.TextDocumentContentProvider, vsc
   readonly onDidChangeCodeLenses = this.lensChanged.event;
   onStateChange?: (summary: string) => void;
   onApplied?: (path: string) => void;
+  onProposed?: (path: string) => void;
+  onRestored?: (path: string) => void;
 
   constructor(private ws: Workspace) {}
 
@@ -96,6 +98,7 @@ export class ReviewController implements vscode.TextDocumentContentProvider, vsc
       const uri = vscode.Uri.from({ scheme: SCHEME, path: '/' + it.args.path, query: it.key });
       const hunks = computeHunks(it.before, it.after);
       this.open.set(uri.toString(), { ...it, uri, hunks, state: hunks.map(() => 'pending') });
+      this.onProposed?.(it.args.path);
       const left = this.ws.exists(it.args.path) ? vscode.Uri.file(this.ws.resolve(it.args.path)) : vscode.Uri.from({ scheme: SCHEME, path: '/' + it.args.path, query: 'empty' });
       await vscode.commands.executeCommand('vscode.diff', left, uri, `Forge review: ${it.args.path} (${hunks.length} hunk${hunks.length === 1 ? '' : 's'})`, { preview: false });
     }
@@ -217,6 +220,7 @@ export class ReviewController implements vscode.TextDocumentContentProvider, vsc
       await this.write(j.path, j.before);
       this.journal.splice(this.journal.lastIndexOf(j), 1);
       restored.push(j.path);
+      this.onRestored?.(j.path);
     }
     return restored;
   }

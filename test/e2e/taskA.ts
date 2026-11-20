@@ -31,6 +31,7 @@ export async function run() {
     await decideAll(() => 'accepted');
     await until('run to finish', async () => !(await state()).busy);
     await sleep(500);
+    res.badges = (await state()).badges;
 
     const py = path.join(root(), '.venv/bin/python');
     const check = (v: string) => sh(py, ['-c', 'from flask.helpers import get_debug_flag; print(get_debug_flag())'], { FLASK_DEBUG: v });

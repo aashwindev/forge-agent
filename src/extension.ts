@@ -7,6 +7,7 @@ import { ReviewController, SCHEME } from './review';
 import { Runner } from './runner';
 import { makeTools, runCommand } from './tools';
 import { Workspace } from './workspace';
+import { Footprint } from './badges';
 
 // Extension = TrueForge client + editor MCP server + review UI.
 // TrueForge runs the agent loop; nothing here calls a model provider.
@@ -28,11 +29,20 @@ export async function activate(ctx: vscode.ExtensionContext) {
   const ws = new Workspace(folder.uri.fsPath, abs => vscode.workspace.textDocuments.find(d => d.uri.scheme === 'file' && d.uri.fsPath === abs)?.getText());
   const review = new ReviewController(ws);
   review.register(ctx);
+  const footprint = new Footprint(ws);
+  ctx.subscriptions.push(vscode.window.registerFileDecorationProvider(footprint));
+  review.onProposed = p => footprint.mark(p, 'proposed');
+  review.onApplied = p => footprint.mark(p, 'applied', true);
+  review.onRestored = p => footprint.mark(p, 'read', true);
   const runner = new Runner(forge, ws, review, agentDir, panel);
+  const begin = panel.begin.bind(panel);
+  panel.begin = label => { footprint.clear(); begin(label); };
+  const end = panel.end.bind(panel);
+  panel.end = () => { footprint.settle(); end(); };
   review.onStateChange = s => { if (s) panel.status(s, 'info'); };
 
   const tools = makeTools(ws, {
-    onRead: (p, tokens, why) => { panel.log('read', `${p} (~${tokens} tok)${why ? ' — ' + why : ''}`); panel.receiptRead(p, tokens, why); },
+    onRead: (p, tokens, why) => { panel.log('read', `${p} (~${tokens} tok)${why ? ' — ' + why : ''}`); panel.receiptRead(p, tokens, why); footprint.mark(p, 'read'); },
     applyEdit: args => review.apply(args, runner.attemptId),
     commandAllowed: line => runner.commandAllowed(line),
   });
@@ -91,7 +101,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     vscode.commands.registerCommand('forge.stop', () => runner.stop()),
 
     // Internal, used by the end-to-end tests to drive the same UI a user clicks.
-    vscode.commands.registerCommand('forge._state', () => ({ busy: runner.busy, reviews: review.snapshot(), transcript: panel.transcript.slice(-400) })),
+    vscode.commands.registerCommand('forge._state', () => ({ busy: runner.busy, reviews: review.snapshot(), badges: footprint.snapshot(), transcript: panel.transcript.slice(-400) })),
     vscode.commands.registerCommand('forge._send', (text: string) => panel.onSend?.(text)),
 
     vscode.commands.registerCommand('forge.undo', async () => {
