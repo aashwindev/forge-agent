@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { decideAll, finish, gitStatus, note, root, sleep, state, until } from './common';
 
-// Task C: the primary model is misconfigured (its key is invalid in TrueForge).
+// Task C: the primary model's endpoint is unreachable (a local model server that is not running).
 // Repeat Task A; Forge must retry, fall back to the second model with no user action,
 // leave the workspace untouched until review, and stay clean after every hunk is rejected.
 const INSTRUCTION = "Treat the values 'off' and 'n' as false as well, case-insensitively, and update the docstring to list every value that is treated as false.";
-const BROKEN = process.env.FORGE_BROKEN_MODEL ?? 'anthropic/claude-haiku-5-5';
+const BROKEN = process.env.FORGE_BROKEN_MODEL ?? 'local-ollama/qwen3-coder';
 const FALLBACK = process.env.FORGE_FALLBACK_MODEL ?? 'openai/gpt-5-4-mini';
 
 export async function run() {
@@ -16,7 +16,7 @@ export async function run() {
     const cfg = vscode.workspace.getConfiguration('forge');
     await cfg.update('model', BROKEN, vscode.ConfigurationTarget.Global);
     await cfg.update('fallbackModel', FALLBACK, vscode.ConfigurationTarget.Global);
-    note(`primary ${BROKEN} (invalid key), fallback ${FALLBACK}; git status before: "${gitStatus()}"`);
+    note(`primary ${BROKEN} (endpoint down), fallback ${FALLBACK}; git status before: "${gitStatus()}"`);
 
     const doc = await vscode.workspace.openTextDocument(path.join(root(), 'src/flask/helpers.py'));
     const ed = await vscode.window.showTextDocument(doc);

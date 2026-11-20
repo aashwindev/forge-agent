@@ -16,7 +16,7 @@ Order is fixed: Intro → A → B → C → cancel → end card. Never cut betwe
    source .venv/bin/activate && git log -1 --oneline && git status
    ```
    You should see `22d92470…` and a clean tree.
-6. Settings: `forge.model` = `openai/gpt-5-4-mini`, `forge.fallbackModel` = `anthropic/claude-haiku-5-5` (for A and B).
+6. Settings: `forge.model` = `openai/gpt-5-4-mini`, `forge.fallbackModel` = `openai/gpt-5-4-nano` (the defaults, for A and B).
 7. Have the TrueForge UI open in a browser tab (http://localhost:8790).
 
 ## 0:00 Intro (≈6 s)
@@ -65,10 +65,10 @@ Caption: *A2 4 files unprompted · B1 receipt · B4 TrueForge session · B2 undo
 
 ## 2:40 Task C: model failure (≈50 s)
 
-1. Show TrueForge Settings → Models with the Anthropic key (invalid). Blur it in the edit.
-2. VS Code settings: `forge.model` = `anthropic/claude-haiku-5-5`, `forge.fallbackModel` = `openai/gpt-5-4-mini`.
+1. Show TrueForge Settings → Models with the **local-ollama** provider (`http://127.0.0.1:11434/v1`). Its local server is not running, so the endpoint is unreachable. Your OpenAI key never needs to be on screen.
+2. VS Code settings: `forge.model` = `local-ollama/qwen3-coder`, `forge.fallbackModel` = `openai/gpt-5-4-mini`.
 3. Repeat Task A exactly (select `get_debug_flag`, Cmd+Alt+K, same instruction).
-4. The banner shows `401 invalid x-api-key. Retrying in 1s…` → `retry 2/2` → `Switching automatically to fallback model openai/gpt-5-4-mini`. Don't click anything, and type in the editor meanwhile.
+4. The banner shows `model endpoint unreachable (ECONNREFUSED 127.0.0.1:11434). Retrying in 1s…`, then `retry 2/2`, then `Switching automatically to fallback model openai/gpt-5-4-mini in the same TrueForge session`. Don't click anything, and type in the editor meanwhile.
 5. The diff appears. Terminal: `git status` → clean (nothing written yet).
 6. Click **✗** on each hunk. `git status` → clean.
 

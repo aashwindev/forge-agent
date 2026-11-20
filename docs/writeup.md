@@ -68,7 +68,8 @@ A run fails over when a turn errors, when no event arrives within 20 s, or when 
 |---|---|---|---|
 | Primary (Tasks A, B and the cancel proof) | `openai/gpt-5-4-mini` | OpenAI API, called only by local TrueForge 0.185.1 | Task A ≈ 2k input + 0.3k output tokens ≈ **$0.003**. Task B ≈ 0.3–1.7M input tokens (≈ 85% cache hits) + 4–10k output ≈ **$0.06–0.34, typically $0.15** |
 | Fallback (Task C) | `openai/gpt-5-4-mini` | same | as Task A |
-| Misconfigured primary (Task C) | `anthropic/claude-haiku-5-5` with an invalid key | TrueForge → 401, three attempts | $0 |
+| Unreachable primary (Task C) | `local-ollama/qwen3-coder`: a custom OpenAI-compatible provider in TrueForge at `http://127.0.0.1:11434/v1`, with no server running | TrueForge → `ECONNREFUSED`, three attempts | $0 |
+| Default fallback (everyday use) | `openai/gpt-5-4-nano` | same OpenAI key | cents |
 | Small-model check (live re-run) | `openai/gpt-5-4-nano` | same | < $0.001 per Task A |
 
 Prices are gpt-5.4-mini list prices ($0.75 input / $0.075 cached input / $4.50 output per 1M tokens). All development and rehearsal runs together cost a few dollars. Task B's input is large because every tool round re-sends the conversation, and TrueForge's prompt caching absorbs most of it.
@@ -84,7 +85,7 @@ To switch models: add or choose a model in TrueForge Settings → Models, then s
 | A3 Streaming + cancel | TODO | tokens stream live; Stop halts in < 100 ms (measured 24–72 ms), `git status` clean |
 | B1 Context | TODO | Context Receipt during Task B: @mentions pinned, auto-retrieved files with reasons, exclusions, 8k budget meter |
 | B2 Diff safety | TODO | per-hunk review; Forge: Undo (A) and Undo run (B) restore, `git status` clean |
-| B3 Resilience | TODO | Task C: 401 → retry 1/2 → retry 2/2 → automatic fallback in the same TrueForge session, no clicks, `git status` clean |
+| B3 Resilience | TODO | Task C: endpoint unreachable → retry 1/2 → retry 2/2 → automatic fallback in the same TrueForge session, no clicks, `git status` clean |
 | B4 TrueForge | TODO | session view: forge-editor MCP calls, approval events, subagent thread |
 | C1 Video | — | A → B → C in order, each verified on screen |
 | C2 Write-up | — | this document |

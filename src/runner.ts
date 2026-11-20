@@ -236,6 +236,8 @@ function sleep(ms: number, signal: AbortSignal) {
 
 function shortError(e?: string): string {
   if (!e) return 'unknown error';
+  const net = e.match(/(ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EHOSTUNREACH)\s*([\w.:-]*)/);
+  if (net) return `model endpoint unreachable (${net[1]}${net[2] ? ' ' + net[2] : ''})`;
   const m = e.match(/\((\d{3})\)[:\s]*([^"}\]]{0,80})/);
   return m ? `${m[1]} ${m[2].trim()}` : e.slice(0, 120);
 }

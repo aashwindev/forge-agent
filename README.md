@@ -24,7 +24,7 @@ A VS Code coding agent whose agent loop runs on [TrueForge](https://github.com/t
 | A3 Streaming + cancel | Tokens stream from `model.message.delta`. Stop aborts, cancels the session, drops proposals, **rolls back applied hunks** | e2e `cancel`: mid-stream stop 24–30 ms; stop after an accepted edit 44–72 ms, `git status` clean |
 | B1 Context | `@file`/`@symbol` + tf-idf retrieval + link expansion (code → tests → docs → changelog), **8k budget**, Context Receipt with reasons and exclusions | `src/context.ts`, `src/mentions.ts`; unit tests; [write-up §4](docs/writeup.md) |
 | B2 Diff safety | Nothing is written until a hunk is accepted. Edit guard (unique `old_text`, Python must parse). **Undo Last Change / Undo Last Run** | e2e `taskA` (undo → clean), `taskB` (undo run → clean); unit tests |
-| B3 Resilience | Retry 1 s / 3 s → **automatic fallback** in the same session, plus a stall watchdog; workspace unchanged | e2e `taskC`: invalid key → 401 ×3 → fallback → reject → `git status` clean |
+| B3 Resilience | Retry 1 s / 3 s → **automatic fallback** in the same session, plus a stall watchdog; workspace unchanged | e2e `taskC`: model endpoint unreachable → 3 attempts → fallback → reject → `git status` clean |
 | B4 TrueForge | Editor tools are **MCP tools**. **TrueForge tool approval drives the review**. Exploration **subagent**, deferred tool loading, compaction | `src/mcpServer.ts`, `agent/*.json`, `src/forge.ts`; ↗ Open in TrueForge link on every run |
 | C1/C2 | Video and write-up | [docs/writeup.md](docs/writeup.md), [docs/RECORDING.md](docs/RECORDING.md) |
 
@@ -35,7 +35,7 @@ A VS Code coding agent whose agent loop runs on [TrueForge](https://github.com/t
    OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge@latest
    ```
    It serves http://localhost:8790. The variable lets TrueForge reach the extension's MCP server on loopback (TrueForge blocks private addresses by default). Nothing else is opened up.
-2. In TrueForge, go to **Settings → Models** and add your providers and keys. Keys live only in TrueForge, never in this repo. Defaults are `openai/gpt-5-4-mini` (primary) and `anthropic/claude-haiku-5-5` (fallback). Any model TrueForge serves works: set `forge.model` / `forge.fallbackModel` in VS Code settings (see `forge.config.example.json`).
+2. In TrueForge, go to **Settings → Models** and add a provider and key. Keys live only in TrueForge, never in this repo. Defaults are `openai/gpt-5-4-mini` (primary) and `openai/gpt-5-4-nano` (fallback), so one OpenAI key is enough. Any model TrueForge serves works: set `forge.model` / `forge.fallbackModel` in VS Code settings (see `forge.config.example.json`), e.g. a local model behind an OpenAI-compatible endpoint.
 3. Build:
    ```
    npm install && npm run build
