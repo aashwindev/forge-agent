@@ -8,7 +8,7 @@ LedgerForge is a VS Code coding agent whose agent loop runs on [TrueForge](https
 
 | ▶ Demo video (3:45) | 📄 Write-up (3 pages) | 🤖 Agent definitions | ⚙️ Example config | ⬇️ Prebuilt extension |
 |---|---|---|---|---|
-| [Watch on YouTube](https://youtu.be/yVlJM8D7o6w) | [docs/writeup.pdf](docs/writeup.pdf) | [agent/](agent) | [ledgerforge.config.example.json](ledgerforge.config.example.json) | [ledgerforge-1.0.0.vsix](https://github.com/aashwindev/ledgerforge/releases/latest) |
+| [Watch on YouTube](https://youtu.be/yVlJM8D7o6w) | [PDF on Google Drive](https://drive.google.com/file/d/1VJ17yi9vN583CrGB6sNHDF9PHtVxbJ__/view?usp=sharing) · [in repo](docs/writeup.pdf) | [agent/](agent) | [ledgerforge.config.example.json](ledgerforge.config.example.json) | [ledgerforge-1.0.0.vsix](https://github.com/aashwindev/ledgerforge/releases/latest) |
 
 [![Watch the 3:45 demo on YouTube](media/readme/video-thumb.jpg)](https://youtu.be/yVlJM8D7o6w)
 
