@@ -42,6 +42,10 @@ Source of truth: [PRD.md](PRD.md) §6 (build order). Tick an item only when its 
 - [ ] **8. Record video** per PRD §4. Gate: every clause in PRD §2 visible.
 - [ ] **9. Write-up PDF** per PRD §5, scorecard timestamps from the final cut.
 - [ ] **10. Clean-clone README check, secrets grep, links public (incognito), submit form.**
+  - [x] README rewritten (setup, agent-definition loading incl. tested manual `curl`, architecture, commands, tests).
+  - [x] Fresh `git clone` -> `npm install && npm run build` OK; `agent/*.json`, LICENSE present.
+  - [x] Secrets grep empty.
+  - [ ] Repo public, video unlisted + incognito check, write-up PDF public, submit form (Aashwin).
 
 ## Notes
 
