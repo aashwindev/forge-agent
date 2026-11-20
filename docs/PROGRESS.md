@@ -23,7 +23,9 @@ Source of truth: [PRD.md](PRD.md) §6 (build order). Tick an item only when its 
   - Flask clone: `.venv` with editable install + pytest 8.4.2 (Flask's lock; newest pytest breaks `tests/test_cli.py`); `.venv/` in `.git/info/exclude` so `git status` stays clean.
   - Video note: use **Forge: Undo Last Change** on camera (deterministic); Ctrl+Z also works on the buffer but leaves it unsaved.
   - **Todo for Aashwin:** press F5 once and eyeball the CodeLens / panel look before recording.
-- [ ] **4. Cancel + journal rollback.** Gate: Stop mid-run leaves `git status` clean.
+- [x] **4. Cancel + journal rollback.** Gate: Stop mid-run leaves `git status` clean.
+  - Verified (`scripts/e2e.sh cancel`): Stop mid-stream in 24 ms, no reviews left, `git status` clean; accept first `cli.py` edit (`M src/flask/cli.py`), Stop at next review in 44 ms -> rolled back, `git status` clean.
+  - Commands: read-only git auto-approved (`forge.autoApproveCommands`); the run_command handler itself refuses anything the user did not approve. Agent + subagent told to explore with search_code/read_file only.
 - [ ] **5. Retry/fallback (Task C).** Gate: invalid key, then auto fallback diff, then reject, then clean.
 - [ ] **6. ContextEngine + receipt + scout instructions + run_command (Task B).** Gate: 3 of 3 rehearsals touch ≥3 files, pytest green, masked JSON, subagent visible in session.
 - [ ] **7. Extras 1–3** (guard, badges, why-this-hunk), only if 1–6 pass. Then feature freeze.

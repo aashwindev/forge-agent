@@ -67,6 +67,19 @@
           "type": "string",
           "default": "anthropic/claude-haiku-5-5",
           "description": "Second model TrueForge switches to automatically if the primary fails. Use a different provider so one bad key cannot take out both."
+        },
+        "forge.autoApproveCommands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "git status",
+            "git diff",
+            "git log",
+            "git show"
+          ],
+          "description": "Command prefixes that run without asking (keep these read-only). Everything else the agent runs asks first."
         }
       }
     },

@@ -19,7 +19,7 @@ const BACKOFF_MS = [1000, 3000];
 const FIRST_EVENT_TIMEOUT_MS = 20_000;
 
 export class Runner {
-  private active?: { abort: AbortController; sessionId?: string; attemptId: string; runId: string; allowCommands: boolean };
+  private active?: { abort: AbortController; sessionId?: string; attemptId: string; runId: string; allowCommands: boolean; approved: Set<string> };
   private seq = 0;
 
   constructor(
@@ -33,13 +33,20 @@ export class Runner {
   get busy() { return !!this.active; }
   get attemptId() { return this.active?.attemptId ?? 'none'; }
 
+  /** Checked by the run_command MCP handler: only commands the user approved in this run (or read-only ones) execute. */
+  commandAllowed(line: string): boolean {
+    if (isAutoApproved(line)) return true;
+    const a = this.active;
+    return !!a && (a.allowCommands || a.approved.delete(line));
+  }
+
   async start(kind: AgentKind, message: string, label: string): Promise<void> {
     if (this.active) { vscode.window.showWarningMessage('Forge is already running. Press Stop first.'); return; }
     const cfg = vscode.workspace.getConfiguration('forge');
     const models = [cfg.get<string>('model'), cfg.get<string>('fallbackModel')].filter((m): m is string => !!m && !m.startsWith('<'));
     const runId = `run-${++this.seq}`;
     const abort = new AbortController();
-    this.active = { abort, runId, attemptId: runId, allowCommands: false };
+    this.active = { abort, runId, attemptId: runId, allowCommands: false, approved: new Set() };
     this.ui.begin(label);
 
     try {
@@ -161,12 +168,21 @@ export class Runner {
   }
 
   private async confirmCommand(args: { command: string; args?: string[] }): Promise<boolean> {
-    if (this.active?.allowCommands) return true;
     const line = [args.command, ...(args.args ?? [])].join(' ');
+    // Read-only commands (by default git status/diff/log/show) never change the workspace: no prompt.
+    if (isAutoApproved(line)) return true;
+    if (this.active?.allowCommands) return true;
     const pick = await vscode.window.showInformationMessage(`Forge wants to run: ${line}`, 'Allow', 'Allow for this run', 'Deny');
     if (pick === 'Allow for this run' && this.active) this.active.allowCommands = true;
-    return pick === 'Allow' || pick === 'Allow for this run';
+    const ok = pick === 'Allow' || pick === 'Allow for this run';
+    if (ok) this.active?.approved.add(line);
+    return ok;
   }
+}
+
+function isAutoApproved(line: string): boolean {
+  const auto = vscode.workspace.getConfiguration('forge').get<string[]>('autoApproveCommands') ?? [];
+  return auto.some(p => line === p || line.startsWith(p + ' '));
 }
 
 function sleep(ms: number, signal: AbortSignal) {

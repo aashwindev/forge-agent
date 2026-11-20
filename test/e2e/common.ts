@@ -11,7 +11,7 @@ export const note = (s: string) => { log.push(`${new Date().toISOString().slice(
 export async function until<T>(what: string, f: () => Promise<T | undefined | false>, ms = 180_000): Promise<T> {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
-    const v = await f();
+    const v = await f().catch(() => undefined);
     if (v) return v as T;
     await sleep(500);
   }
@@ -42,7 +42,8 @@ export async function decideAll(decide: (path: string, i: number) => 'accepted' 
   }
 }
 
-export function finish(name: string, ok: boolean, extra: Record<string, unknown> = {}) {
+export async function finish(name: string, ok: boolean, extra: Record<string, unknown> = {}) {
+  extra.transcript = (await state().catch(() => ({})))?.transcript;
   const out = process.env.FORGE_E2E_OUT ?? `/tmp/forge-e2e-${name}.json`;
   fs.writeFileSync(out, JSON.stringify({ name, ok, log, ...extra }, null, 2));
 }

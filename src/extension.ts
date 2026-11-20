@@ -34,6 +34,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
   const tools = makeTools(ws, {
     onRead: (p, tokens, why) => panel.log('read', `${p} (~${tokens} tok)${why ? ' — ' + why : ''}`),
     applyEdit: args => review.apply(args, runner.attemptId),
+    commandAllowed: line => runner.commandAllowed(line),
   });
 
   /** Start the MCP server and register it + the agents in TrueForge. Safe to call repeatedly. */
@@ -90,7 +91,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     vscode.commands.registerCommand('forge.stop', () => runner.stop()),
 
     // Internal, used by the end-to-end tests to drive the same UI a user clicks.
-    vscode.commands.registerCommand('forge._state', () => ({ busy: runner.busy, reviews: review.snapshot() })),
+    vscode.commands.registerCommand('forge._state', () => ({ busy: runner.busy, reviews: review.snapshot(), transcript: panel.transcript.slice(-60) })),
     vscode.commands.registerCommand('forge._send', (text: string) => panel.onSend?.(text)),
 
     vscode.commands.registerCommand('forge.undo', async () => {

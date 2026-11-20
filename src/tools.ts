@@ -23,6 +23,8 @@ export interface ToolHooks {
   onRead?(path: string, tokens: number, why: string): void;
   /** Called only after TrueForge approval. Applies the hunks the user accepted and reports back. */
   applyEdit(args: EditArgs): Promise<string>;
+  /** True if the user approved this exact command (or it is auto-approved read-only). */
+  commandAllowed?(line: string): boolean;
 }
 
 const MAX_READ_LINES = 400;
@@ -234,7 +236,11 @@ export function makeTools(ws: Workspace, hooks: ToolHooks): ToolSpec[] {
         args: z.array(z.string()).default([]).describe('Arguments, e.g. ["tests/test_cli.py", "-q"]'),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-      handler: async ({ command, args }) => runCommand(ws, command, args),
+      handler: async ({ command, args }) => {
+        const line = [command, ...(args ?? [])].join(' ');
+        if (hooks.commandAllowed && !hooks.commandAllowed(line)) return `Not run: the user has not approved "${line}". Explore with search_code, find_symbol and read_file; use run_command only for tests after edits.`;
+        return runCommand(ws, command, args);
+      },
     },
   ];
 }

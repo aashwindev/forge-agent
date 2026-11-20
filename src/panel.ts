@@ -8,6 +8,9 @@ export class ForgePanel implements vscode.WebviewViewProvider, RunUI {
   static readonly id = 'forge.panel';
   private view?: vscode.WebviewView;
   private queue: any[] = [];
+  /** Plain-text record of the panel (also read by the e2e tests). */
+  readonly transcript: string[] = [];
+  private textBuf = '';
   onSend?: (text: string) => void;
   onStop?: () => void;
 
@@ -31,11 +34,12 @@ export class ForgePanel implements vscode.WebviewViewProvider, RunUI {
     else this.queue.push(m);
   }
 
-  begin(label: string) { this.post({ type: 'begin', label }); }
-  text(delta: string) { this.post({ type: 'text', delta }); }
-  log(kind: string, text: string) { this.post({ type: 'log', kind, text }); }
-  status(text: string, tone: string) { this.post({ type: 'status', text, tone }); }
-  end() { this.post({ type: 'end' }); }
+  private flush() { if (this.textBuf) { this.transcript.push(`text: ${this.textBuf}`); this.textBuf = ''; } }
+  begin(label: string) { this.flush(); this.transcript.push(`begin: ${label}`); this.post({ type: 'begin', label }); }
+  text(delta: string) { this.textBuf += delta; this.post({ type: 'text', delta }); }
+  log(kind: string, text: string) { this.flush(); this.transcript.push(`${kind}: ${text}`); this.post({ type: 'log', kind, text }); }
+  status(text: string, tone: string) { this.flush(); this.transcript.push(`status[${tone}]: ${text}`); this.post({ type: 'status', text, tone }); }
+  end() { this.flush(); this.transcript.push('end'); this.post({ type: 'end' }); }
 }
 
 function nonce() {

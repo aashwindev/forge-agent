@@ -49,5 +49,5 @@ export async function run() {
   } catch (e) {
     res.error = (e as Error).stack;
   }
-  finish('taskA', ok, res);
+  await finish('taskA', ok, res);
 }
