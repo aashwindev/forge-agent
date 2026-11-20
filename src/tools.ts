@@ -144,7 +144,10 @@ const ALLOWED_COMMANDS: Record<string, (args: string[]) => string | undefined> =
   pytest: () => undefined,
   python: () => undefined,
   python3: () => undefined,
-  flask: () => undefined,
+  node: () => undefined,
+  npm: args => (args[0] === 'test' || (args[0] === 'run' && args[1] === 'test') ? undefined : 'Only npm test is allowed.'),
+  go: args => (['test', 'vet'].includes(args[0]) ? undefined : 'Only go test and go vet are allowed.'),
+  cargo: args => (['test', 'check'].includes(args[0]) ? undefined : 'Only cargo test and cargo check are allowed.'),
   git: args => (['status', 'diff', 'log', 'show'].includes(args[0]) ? undefined : 'Only git status, diff, log and show are allowed.'),
 };
 
@@ -176,7 +179,7 @@ export function makeTools(ws: Workspace, hooks: ToolHooks): ToolSpec[] {
       name: 'search_code',
       title: 'Search code',
       description: 'Ranked search over the workspace. Give identifiers or keywords; returns the best-matching files with matching lines. Use this to find code you have not been shown.',
-      inputSchema: { query: z.string().describe('Identifiers or keywords, e.g. "routes_command add_command FlaskGroup"') },
+      inputSchema: { query: z.string().describe('Identifiers or keywords, e.g. "parse_config load_settings ConfigLoader"') },
       annotations: { readOnlyHint: true, openWorldHint: false },
       handler: async ({ query }) => searchCode(ws, query),
     },
@@ -184,7 +187,7 @@ export function makeTools(ws: Workspace, hooks: ToolHooks): ToolSpec[] {
       name: 'find_symbol',
       title: 'Find symbol',
       description: 'Find where a function, class or variable is defined and where it is used.',
-      inputSchema: { name: z.string().describe('Bare identifier, e.g. get_debug_flag') },
+      inputSchema: { name: z.string().describe('Bare identifier, e.g. parse_config') },
       annotations: { readOnlyHint: true, openWorldHint: false },
       handler: async ({ name }) => findSymbol(ws, name),
     },
@@ -193,7 +196,7 @@ export function makeTools(ws: Workspace, hooks: ToolHooks): ToolSpec[] {
       title: 'Read file',
       description: `Read a workspace file (the live editor buffer if open). Optional 1-based start_line/end_line; at most ${MAX_READ_LINES} lines per call. Copy text from here verbatim into propose_edit old_text.`,
       inputSchema: {
-        path: z.string().describe('Workspace-relative path, e.g. src/flask/cli.py'),
+        path: z.string().describe('Workspace-relative path, e.g. src/app/main.py'),
         start_line: z.number().int().positive().optional(),
         end_line: z.number().int().positive().optional(),
         why: z.string().optional().describe('One short phrase: why you are reading this file'),
@@ -230,10 +233,10 @@ export function makeTools(ws: Workspace, hooks: ToolHooks): ToolSpec[] {
     {
       name: 'run_command',
       title: 'Run command',
-      description: 'Run a command in the workspace root without a shell (allowed: pytest, python, flask, git status/diff/log/show). Uses the workspace virtualenv when present. Output is trimmed.',
+      description: 'Run a command in the workspace root without a shell (allowed: test runners and interpreters: pytest, python, node, npm test, go test/vet, cargo test/check; read-only git status/diff/log/show; a project CLI runs as python -m <module>). Uses the workspace virtualenv when present. Output is trimmed.',
       inputSchema: {
         command: z.string().describe('Executable, e.g. pytest'),
-        args: z.array(z.string()).default([]).describe('Arguments, e.g. ["tests/test_cli.py", "-q"]'),
+        args: z.array(z.string()).default([]).describe('Arguments, e.g. ["tests/test_main.py", "-q"]'),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       handler: async ({ command, args }) => {

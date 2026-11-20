@@ -60,6 +60,8 @@ test('run_command allowlist: no shell, no write-capable git', async () => {
   const ws = fixture();
   assert.match(await runCommand(ws, 'rm', ['-rf', '.']), /not allowed|Allowed/i);
   assert.match(await runCommand(ws, 'git', ['push']), /Only git status, diff, log and show/);
+  assert.match(await runCommand(ws, 'npm', ['install', 'left-pad']), /Only npm test/);
+  assert.match(await runCommand(ws, 'cargo', ['publish']), /Only cargo test and cargo check/);
 });
 
 test('terms drop stopwords and short words', () => {

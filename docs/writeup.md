@@ -39,7 +39,7 @@ TrueForge (local mode) runs the agent loop, calls the model, calls our MCP serve
 | `search_code`, `find_symbol` | ranked search; definitions and references | none |
 | `read_file` | reads the live editor buffer, including unsaved changes | none |
 | `propose_edit(path, old_text, new_text, reason)` | writes **only the hunks the user accepted** | TrueForge approval |
-| `run_command` | no shell; allowlist of pytest, python, flask and read-only git | TrueForge approval |
+| `run_command` | no shell; allowlist of test runners (pytest, python, node, npm test, go test, cargo test) and read-only git | TrueForge approval |
 
 All tools are confined to the workspace and refuse `.git` and secrets files. The agent, not the extension, decides what to read and change.
 

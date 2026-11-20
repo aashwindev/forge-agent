@@ -1,6 +1,6 @@
 import { Workspace, estimateTokens } from './workspace';
 
-// Explicit context: "@src/flask/cli.py", "@cli.py" or "@get_debug_flag" in a request.
+// Explicit context: "@src/app/main.py", "@main.py" or "@parse_config" in a request.
 // Files are pinned whole (or as an outline if huge); symbols are pinned as their full definition.
 
 export interface Mention { token: string; kind: 'file' | 'symbol'; path: string; line?: number; body: string; tokens: number }

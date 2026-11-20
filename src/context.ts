@@ -42,7 +42,7 @@ export async function buildContextPack(ws: Workspace, request: string, budget = 
     // BM25-style saturating term frequency times idf, per request term.
     const w = new Map(ts.map(term => { const tf = count(lower, term); return [term, tf ? (tf / (tf + 1.5)) * idf(term) : 0]; }));
     const hits = ts.filter(term => w.get(term)! > 0).sort((a, b) => w.get(b)! - w.get(a)!);
-    // A request term in the file name ("cli" -> cli.py) is a strong signal.
+    // A request term in the file name ("auth" -> auth.py) is a strong signal.
     const nameBoost = ts.some(term => name.replace(/\.\w+$/, '') === term) ? 2 : 1;
     return { f, hits, score: hits.reduce((s, term) => s + w.get(term)!, 0) * nameBoost };
   }).filter(x => x.hits.length).sort((a, b) => b.score - a.score);
