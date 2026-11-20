@@ -11,7 +11,7 @@ Every write goes into a run journal, so you can undo one change or a whole run. 
 
 ## 1. Team
 
-TODO: names, college or employer, GitHub handles. Techfest Team ID: TODO.
+**Team Incept:** Aashwin Dev (team lead), Divyam Jindal, Harman Manik, Jeet Marlecha, Malyadri Chowdary Marneni. Repository: https://github.com/aashwindev/ledgerforge (GitHub: aashwindev). College or employer, other GitHub handles and Techfest Team ID: TODO.
 
 ## 2. Starting point
 
