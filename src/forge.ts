@@ -131,7 +131,10 @@ export class ForgeClient {
             const call = (src?.toolCalls ?? []).find((c: any) => c.id === ref.id);
             let args: any = {};
             try { args = JSON.parse(call?.function?.arguments ?? '{}'); } catch { /* leave empty */ }
-            pending.push({ threadId: e.threadId, toolCallId: ref.id, name: call?.toolInfo?.name ?? call?.function?.name ?? '?', args });
+            let name = call?.toolInfo?.name ?? call?.function?.name ?? '?';
+            // Deferred tools arrive wrapped: call_tool({mcp_server, tool_name, input}).
+            if (name === 'call_tool' && args?.tool_name) { name = args.tool_name; args = args.input ?? {}; }
+            pending.push({ threadId: e.threadId, toolCallId: ref.id, name, args });
           }
         }
         if (e.type === 'turn.update' && e.state?.status === 'paused') { paused = true; break; }

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { RunUI } from './runner';
+import { ContextPack } from './context';
 
 // The agent panel (activity bar → Forge). Streams tokens as TrueForge sends them,
 // shows a feed of what the agent did, and has Send / Stop.
@@ -40,6 +41,12 @@ export class ForgePanel implements vscode.WebviewViewProvider, RunUI {
   log(kind: string, text: string) { this.flush(); this.transcript.push(`${kind}: ${text}`); this.post({ type: 'log', kind, text }); }
   status(text: string, tone: string) { this.flush(); this.transcript.push(`status[${tone}]: ${text}`); this.post({ type: 'status', text, tone }); }
   end() { this.flush(); this.transcript.push('end'); this.post({ type: 'end' }); }
+  receipt(p: ContextPack) {
+    this.flush();
+    this.transcript.push(`receipt: ${p.used}/${p.budget} tok; ${p.rows.map(r => `${r.included ? '+' : '-'}${r.path}`).join(' ')}`);
+    this.post({ type: 'receipt', rows: p.rows, used: p.used, budget: p.budget, strategy: p.strategy });
+  }
+  receiptRead(path: string, tokens: number, why?: string) { this.post({ type: 'receiptRead', path, tokens, why: why ?? '' }); }
 }
 
 function nonce() {
@@ -56,6 +63,16 @@ function html(n: string) {
   #status.error { border-color: var(--vscode-editorError-foreground); }
   #status.ok { border-color: var(--vscode-testing-iconPassed, #3fb950); }
   #feed { flex: 1; overflow-y: auto; }
+  #receipt { margin: 0 0 6px; font-size: 0.92em; max-height: 40vh; overflow-y: auto; }
+  #receipt summary { cursor: pointer; font-weight: 600; }
+  .meter { height: 6px; background: var(--vscode-editorWidget-background); border-radius: 3px; margin: 4px 0; }
+  .meter > div { height: 100%; background: var(--vscode-progressBar-background); border-radius: 3px; }
+  .strategy { opacity: 0.75; margin-bottom: 4px; }
+  #receipt table { width: 100%; border-collapse: collapse; }
+  #receipt td { padding: 1px 4px; vertical-align: top; }
+  #receipt td.p { font-family: var(--vscode-editor-font-family); word-break: break-all; }
+  #receipt tr.out { opacity: 0.55; }
+  #receipt .src { font-size: 0.85em; padding: 0 4px; border-radius: 3px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
   .turn { margin: 10px 0 4px; font-weight: 600; }
   .msg { white-space: pre-wrap; line-height: 1.45; }
   .log { font-size: 0.92em; opacity: 0.85; margin: 2px 0; font-family: var(--vscode-editor-font-family); }
@@ -69,6 +86,7 @@ function html(n: string) {
   button:disabled { opacity: 0.5; cursor: default; }
 </style></head><body>
 <div id="status">Ready. Describe a change; Forge finds the files.</div>
+<details id="receipt" open hidden><summary>Context Receipt</summary><div class="strategy"></div><div class="meter"><div></div></div><table></table></details>
 <div id="feed"></div>
 <div id="composer">
   <textarea id="input" placeholder="Ask Forge to change the workspace… (Ctrl/Cmd+Enter to send)"></textarea>
@@ -79,6 +97,15 @@ function html(n: string) {
   const feed = document.getElementById('feed'), status = document.getElementById('status');
   const input = document.getElementById('input'), send = document.getElementById('send'), stop = document.getElementById('stop');
   let msg = null;
+  const receipt = document.getElementById('receipt'), rtable = receipt.querySelector('table');
+  let rrows = new Map(), budget = 0, used = 0, agentTok = 0;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const drawReceipt = () => {
+    receipt.hidden = false;
+    receipt.querySelector('summary').textContent = 'Context Receipt · packed ' + used + ' / ' + budget + ' tok' + (agentTok ? ' · agent read ' + agentTok + ' tok' : '');
+    receipt.querySelector('.meter > div').style.width = Math.min(100, 100 * used / (budget || 1)) + '%';
+    rtable.innerHTML = [...rrows.values()].map(r => '<tr class="' + (r.included ? '' : 'out') + '"><td>' + (r.included ? '✓' : '✗') + '</td><td class="p">' + esc(r.path) + '</td><td><span class="src">' + esc(r.source) + (r.read ? ' · read' : '') + '</span></td><td>' + (r.tokens ? r.tokens : '') + '</td><td>' + esc(r.reason) + '</td></tr>').join('');
+  };
   const atBottom = () => feed.scrollHeight - feed.scrollTop - feed.clientHeight < 40;
   const add = (cls, text) => { const stick = atBottom(); const d = document.createElement('div'); d.className = cls; d.textContent = text; feed.appendChild(d); if (stick) feed.scrollTop = feed.scrollHeight; return d; };
   send.onclick = () => { vscode.postMessage({ type: 'send', text: input.value }); input.value = ''; };
@@ -89,6 +116,8 @@ function html(n: string) {
     if (m.type === 'text') { if (!msg) msg = add('msg', ''); const stick = atBottom(); msg.textContent += m.delta; if (stick) feed.scrollTop = feed.scrollHeight; }
     if (m.type === 'log') { msg = null; add('log ' + m.kind, ({ tool: '⚙ ', read: '👁 ', guard: '⛔ ', subagent: '↳ ', session: '◆ ', info: '· ' }[m.kind] || '') + m.text); }
     if (m.type === 'status') { status.textContent = m.text; status.className = m.tone; }
+    if (m.type === 'receipt') { rrows = new Map(m.rows.map(r => [r.path, { ...r }])); budget = m.budget; used = m.used; agentTok = 0; receipt.querySelector('.strategy').textContent = 'Strategy: ' + m.strategy; drawReceipt(); }
+    if (m.type === 'receiptRead' && budget) { agentTok += m.tokens; const r = rrows.get(m.path); if (r) { r.read = true; r.included = true; } else rrows.set(m.path, { path: m.path, source: 'agent', reason: m.why || 'read by the agent', tokens: m.tokens, included: true, read: true }); drawReceipt(); }
     if (m.type === 'end') { send.disabled = false; stop.disabled = true; msg = null; }
   });
   vscode.postMessage({ type: 'ready' });

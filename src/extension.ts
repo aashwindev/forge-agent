@@ -32,7 +32,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
   review.onStateChange = s => { if (s) panel.status(s, 'info'); };
 
   const tools = makeTools(ws, {
-    onRead: (p, tokens, why) => panel.log('read', `${p} (~${tokens} tok)${why ? ' — ' + why : ''}`),
+    onRead: (p, tokens, why) => { panel.log('read', `${p} (~${tokens} tok)${why ? ' — ' + why : ''}`); panel.receiptRead(p, tokens, why); },
     applyEdit: args => review.apply(args, runner.attemptId),
     commandAllowed: line => runner.commandAllowed(line),
   });

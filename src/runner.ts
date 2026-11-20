@@ -3,6 +3,7 @@ import { AgentKind, Decision, ForgeClient, PendingCall, TurnResult, loadAgentDef
 import { ReviewController, ReviewItem, editKey } from './review';
 import { EditArgs, runCommand, validateEdit } from './tools';
 import { Workspace } from './workspace';
+import { ContextPack, buildContextPack } from './context';
 
 // One run = one user request. Owns cancellation, retry/fallback and rollback,
 // so a stopped or failed run never leaves half-applied edits behind.
@@ -13,6 +14,8 @@ export interface RunUI {
   log(kind: 'tool' | 'read' | 'guard' | 'subagent' | 'info' | 'session', text: string): void;
   status(text: string, tone: 'info' | 'warn' | 'error' | 'ok'): void;
   end(): void;
+  /** Context Receipt: what the editor packed before the turn, and (via receiptRead) what the agent read. */
+  receipt?(pack: ContextPack): void;
 }
 
 const BACKOFF_MS = [1000, 3000];
@@ -48,6 +51,12 @@ export class Runner {
     const abort = new AbortController();
     this.active = { abort, runId, attemptId: runId, allowCommands: false, approved: new Set() };
     this.ui.begin(label);
+    let input = message;
+    if (kind === 'forge-agent') {
+      const pack = await buildContextPack(this.ws, message);
+      this.ui.receipt?.(pack);
+      input = pack.message;
+    }
 
     try {
       for (let m = 0; m < models.length; m++) {
@@ -58,7 +67,7 @@ export class Runner {
           if (abort.signal.aborted) return;
           this.active.attemptId = `${runId}#${m}.${t}`;
           this.ui.status(`${model}${t ? ` (retry ${t}/${BACKOFF_MS.length})` : ''}: working…`, 'info');
-          const r = await this.attempt(spec, message, abort.signal);
+          const r = await this.attempt(spec, input, abort.signal);
           if (abort.signal.aborted || r.status === 'cancelled') return;
           if (r.status === 'done') {
             this.ui.status(`Done on ${model}${m ? ' (fallback)' : ''}.`, 'ok');
@@ -151,7 +160,8 @@ export class Runner {
           ? { toolCallId: c.toolCallId, threadId: c.threadId, allow: true }
           : { toolCallId: c.toolCallId, threadId: c.threadId, allow: false, reason: 'The user declined to run this command.' });
       } else {
-        decisions.push({ toolCallId: c.toolCallId, threadId: c.threadId, allow: true });
+        // Fail closed: only the two gated tools are expected here.
+        decisions.push({ toolCallId: c.toolCallId, threadId: c.threadId, allow: false, reason: `Unexpected approval request for ${c.name}.` });
       }
     }
     if (items.length) {

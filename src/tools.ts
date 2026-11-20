@@ -80,9 +80,9 @@ function pythonBin(): string {
 
 // ---------- search ----------
 
-function terms(query: string): string[] {
+export function terms(query: string): string[] {
   const raw = query.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? [];
-  const stop = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'into', 'any', 'its', 'are', 'all', 'def', 'class']);
+  const stop = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'into', 'any', 'its', 'are', 'all', 'def', 'class', 'must', 'new', 'add', 'other', 'also', 'should', 'well', 'every', 'each']);
   return [...new Set(raw.map(t => t.toLowerCase()).filter(t => t.length > 2 && !stop.has(t)))];
 }
 
