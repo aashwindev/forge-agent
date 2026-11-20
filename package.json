@@ -50,6 +50,9 @@
         "icon": "$(close-all)"
       }
     ],
+    "configurationDefaults": {
+      "diffEditor.codeLens": true
+    },
     "configuration": {
       "title": "LedgerForge",
       "properties": {
