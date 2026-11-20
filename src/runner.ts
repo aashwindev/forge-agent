@@ -72,7 +72,9 @@ export class Runner {
         for (let t = 0; t < tries; t++) {
           if (abort.signal.aborted) return;
           this.active.attemptId = `${runId}#${m}.${t}`;
-          this.ui.status(`${model}${t ? ` (retry ${t}/${BACKOFF_MS.length})` : ''}: working…`, 'info');
+          this.ui.status(m
+            ? `Switched automatically to fallback model ${model} (${models[0]} failed: ${lastError}). Working in the same TrueForge session…`
+            : `${model}${t ? ` (retry ${t}/${BACKOFF_MS.length})` : ''}: working…`, m ? 'warn' : 'info');
           let r: TurnResult | undefined;
           if (session) {
             try {
@@ -103,9 +105,11 @@ export class Runner {
           const why = lastError = shortError(r.error);
           if (t < tries - 1) {
             this.ui.status(`${model} failed: ${why}. Retrying in ${BACKOFF_MS[t] / 1000}s…`, 'warn');
+            this.ui.log('info', `⚠ ${model} failed (${why}); retry ${t + 1}/${BACKOFF_MS.length} in ${BACKOFF_MS[t] / 1000}s`);
             await sleep(BACKOFF_MS[t], abort.signal);
           } else if (m < models.length - 1) {
             this.ui.status(`${model} failed: ${why}. Switching automatically to fallback model ${models[m + 1]} in the same TrueForge session (history kept).`, 'warn');
+            this.ui.log('info', `↪ Switching automatically to fallback model ${models[m + 1]} (same TrueForge session, no user action)`);
           } else {
             // Nothing worked: leave the workspace exactly as it was before the run.
             const undone = await this.review.undo(runId, true);
