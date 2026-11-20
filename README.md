@@ -8,7 +8,11 @@ LedgerForge is a VS Code coding agent whose agent loop runs on [TrueForge](https
 
 | ▶ Demo video (3:45) | 📄 Write-up (3 pages) | 🤖 Agent definitions | ⚙️ Example config | ⬇️ Prebuilt extension |
 |---|---|---|---|---|
-| [Watch](https://github.com/aashwindev/ledgerforge/releases/download/v1.0.0/LedgerForge-demo.mp4) | [docs/writeup.pdf](docs/writeup.pdf) | [agent/](agent) | [ledgerforge.config.example.json](ledgerforge.config.example.json) | [ledgerforge-1.0.0.vsix](https://github.com/aashwindev/ledgerforge/releases/latest) |
+| [Watch on YouTube](https://youtu.be/yVlJM8D7o6w) | [docs/writeup.pdf](docs/writeup.pdf) | [agent/](agent) | [ledgerforge.config.example.json](ledgerforge.config.example.json) | [ledgerforge-1.0.0.vsix](https://github.com/aashwindev/ledgerforge/releases/latest) |
+
+[![Watch the 3:45 demo on YouTube](media/readme/video-thumb.jpg)](https://youtu.be/yVlJM8D7o6w)
+
+<sub>▶ **[Watch the demo on YouTube](https://youtu.be/yVlJM8D7o6w)** (3:45, captions on): Tasks A, B and C on Flask 3.1.3, each verified on screen. Also available as an [MP4 download](https://github.com/aashwindev/ledgerforge/releases/download/v1.0.0/LedgerForge-demo.mp4).</sub>
 
 ![Task A: select get_debug_flag, Cmd+Option+K, the diff opens in the editor with Accept / Reject on each hunk](media/readme/task-a.gif)
 
@@ -26,7 +30,7 @@ The brief names three ways AI coding tools let you down. LedgerForge answers eac
 
 ## Scorecard
 
-Timestamps are from the [demo video](https://github.com/aashwindev/ledgerforge/releases/download/v1.0.0/LedgerForge-demo.mp4). Every claim is measured on the build in this repo.
+Timestamps are from the [demo video](https://youtu.be/yVlJM8D7o6w). Every claim is measured on the build in this repo.
 
 | Criterion | Video | What you see | Code and tests |
 |---|---|---|---|
@@ -37,7 +41,7 @@ Timestamps are from the [demo video](https://github.com/aashwindev/ledgerforge/r
 | **B2** Diff safety | 0:50, 1:04, 2:24 | Per-hunk review; **Undo Last Change** (Task A) and **Undo Last Run** (Task B, all 4 files) restore the tree; `git status` clean | `src/review.ts` (run journal) |
 | **B3** Resilience | 2:30–3:05 | Primary endpoint unreachable → retry 1 s → retry 3 s → **automatic fallback** to `openai/gpt-5-4-mini`, no user action; `git status` clean before and after | `src/runner.ts` · e2e `taskC` |
 | **B4** TrueForge depth | 1:35, 2:15 | Editor capabilities are **MCP tools**; **TrueForge tool approval drives the diff review**; a **scout sub-agent** explores the repo (visible as its own thread in the session); deferred tool loading and compaction are on | `agent/*.json`, `src/mcpServer.ts`, `src/forge.ts` |
-| **C1** Video | 0:33, 1:10, 2:30 | Tasks A → B → C in order, each verified on screen. Instruction → diff is never cut | [video](https://github.com/aashwindev/ledgerforge/releases/download/v1.0.0/LedgerForge-demo.mp4) |
+| **C1** Video | 0:33, 1:10, 2:30 | Tasks A → B → C in order, each verified on screen. Instruction → diff is never cut | [video](https://youtu.be/yVlJM8D7o6w) |
 | **C2** Write-up | — | Architecture, context strategy, model setup, trade-offs, timestamped scorecard, honest limitations | [docs/writeup.pdf](docs/writeup.pdf) |
 
 ## Screenshots (from the recorded runs)
@@ -158,7 +162,7 @@ These are stated plainly; details and next steps are in [write-up §8](docs/writ
 
 ## Team Incept
 
-Aashwin Dev (lead) · Divyam Jindal · Harman Manik · Jeet Marlecha · Malyadri Chowdary Marneni
+Aashwin Dev (lead) · Divyam Jindal · Harman Manik · Jeet Marlecha · Malyadri Chowdary Marneni · Masters' Union · Techfest Team ID TM-B4A4C352E3C
 
 **Starting point:** from scratch, with no upstream fork. Third-party code is used only as npm dependencies, listed in the write-up §7.
 

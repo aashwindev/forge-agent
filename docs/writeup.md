@@ -1,6 +1,6 @@
 # LedgerForge: TrueFoundry Forge-a-thon, Round 1
 
-*Every change reviewed, every choice explained, every failure survived.* Repo: https://github.com/aashwindev/ledgerforge · Video: https://github.com/aashwindev/ledgerforge/releases/download/v1.0.0/LedgerForge-demo.mp4
+*Every change reviewed, every choice explained, every failure survived.* Repo: https://github.com/aashwindev/ledgerforge · Video: https://youtu.be/yVlJM8D7o6w
 
 The brief names three ways AI coding tools fail: they lose track of the file you care about, rewrite code you did not ask them to touch, and edit symbols that do not exist. LedgerForge answers each one inside the editor:
 - A **Context Receipt** shows which files the agent chose, and why.
@@ -11,7 +11,7 @@ Every write goes into a run journal, so you can undo one change or a whole run. 
 
 ## 1. Team
 
-**Team Incept:** Aashwin Dev (team lead), Divyam Jindal, Harman Manik, Jeet Marlecha, Malyadri Chowdary Marneni. Repository: https://github.com/aashwindev/ledgerforge (GitHub: aashwindev). College or employer, other GitHub handles and Techfest Team ID: TODO.
+**Team Incept** (Techfest Team ID TM-B4A4C352E3C), all from Masters' Union: Aashwin Dev (team lead, GitHub aashwindev), Divyam Jindal, Harman Manik, Jeet Marlecha and Malyadri Chowdary Marneni. Repository: https://github.com/aashwindev/ledgerforge
 
 ## 2. Starting point
 
