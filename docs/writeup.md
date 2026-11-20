@@ -102,13 +102,13 @@ Unknown approval requests are denied (fail closed).
 
 | Row | Time | Claim (measured on the final build) |
 |---|---|---|
-| A1 Inline edit | 0:44, 0:50, 2:59 | Task A: select, Cmd/Ctrl+Alt+K, diff in about 5 s with ✓ per hunk (A) and ✗ per hunk (C); prints `False` |
+| A1 Inline edit | 0:44, 0:50, 2:59 | Task A: select, Cmd/Ctrl+Alt+K, diff in about 4 s with ✓ per hunk (A) and ✗ per hunk (C); prints `False` |
 | A2 Agent mode | 1:10–2:15 | Task B: `cli.py`, `test_cli.py`, `cli.rst` and `CHANGES.rst` found and edited unprompted; 59 tests pass; masked JSON |
 | A3 Streaming + cancel | 1:29, 3:15–3:27 | tokens stream live; typing works during a run; Stop halts in under 100 ms and rolls back the accepted hunk; `git status` clean |
 | B1 Context | 1:22, 1:52 | Context Receipt in Task B: 10 chosen and 5 excluded files with reasons, 2,991 / 8,000-token meter |
 | B2 Diff safety | 0:50, 1:04, 2:24 | per-hunk review; Undo Last Change (A) and Undo Last Run (B) restore files, `git status` clean |
 | B3 Resilience | 2:30–3:05 | endpoint unreachable → retries at 1 s and 3 s → automatic fallback in the same session, no clicks; `git status` clean |
-| B4 TrueForge | 1:35, 2:15 | session shows `ledgerforge-editor` tool calls, approval events and the subagent thread |
+| B4 TrueForge | 1:35, 2:15–2:24 | approval pauses drive the review (1:35); session shows `ledgerforge-editor` tool calls, approvals and the subagent's own thread (2:20) |
 | C1 Video | 0:33, 1:10, 2:30 | A → B → C in order, each verified on screen |
 | C2 Write-up | — | this document |
 

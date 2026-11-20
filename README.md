@@ -40,7 +40,7 @@ Timestamps are from the [demo video](https://youtu.be/yVlJM8D7o6w). Every claim 
 | **B1** Context | 1:22, 1:52 | `@file` / `@symbol` + tf-idf retrieval + link expansion (code → tests → docs → changelog), **8k-token budget**, Context Receipt with reasons *and exclusions* | `src/context.ts`, `src/mentions.ts` · unit tests |
 | **B2** Diff safety | 0:50, 1:04, 2:24 | Per-hunk review; **Undo Last Change** (Task A) and **Undo Last Run** (Task B, all 4 files) restore the tree; `git status` clean | `src/review.ts` (run journal) |
 | **B3** Resilience | 2:30–3:05 | Primary endpoint unreachable → retry 1 s → retry 3 s → **automatic fallback** to `openai/gpt-5-4-mini`, no user action; `git status` clean before and after | `src/runner.ts` · e2e `taskC` |
-| **B4** TrueForge depth | 1:35, 2:15 | Editor capabilities are **MCP tools**; **TrueForge tool approval drives the diff review**; a **scout sub-agent** explores the repo (visible as its own thread in the session); deferred tool loading and compaction are on | `agent/*.json`, `src/mcpServer.ts`, `src/forge.ts` |
+| **B4** TrueForge depth | 1:35, 2:15–2:24 | Editor capabilities are **MCP tools**; **TrueForge tool approval drives the diff review**; a **scout sub-agent** explores the repo (visible as its own thread in the session); deferred tool loading and compaction are on | `agent/*.json`, `src/mcpServer.ts`, `src/forge.ts` |
 | **C1** Video | 0:33, 1:10, 2:30 | Tasks A → B → C in order, each verified on screen. Instruction → diff is never cut | [video](https://youtu.be/yVlJM8D7o6w) |
 | **C2** Write-up | — | Architecture, context strategy, model setup, trade-offs, timestamped scorecard, honest limitations | [docs/writeup.pdf](docs/writeup.pdf) |
 
