@@ -61,12 +61,14 @@ We did not use Code Mode or skills, because both need the sandbox and the editor
 
 ## 5. Model setup
 
-| Role | Model | Where it ran | Rough cost |
+| Role | Model | Where it ran | Rough cost (measured from TrueForge usage events) |
 |---|---|---|---|
-| Primary (all three tasks) | `openai/gpt-5-4-mini` | OpenAI API via local TrueForge 0.185.1 | TODO per Task B run; Task A < TODO |
-| Fallback (Task C) | `openai/gpt-5-4-mini` | same | — |
-| Misconfigured primary (Task C) | `anthropic/claude-haiku-5-5` with an invalid key | TrueForge → 401 | 0 |
-| Small-model check (live re-run) | `openai/gpt-5-4-nano` | same | TODO |
+| Primary (Tasks A, B and the cancel proof) | `openai/gpt-5-4-mini` | OpenAI API, called only by local TrueForge 0.185.1 | Task A ≈ 2k input + 0.3k output tokens ≈ **$0.003**. Task B ≈ 0.3–1.7M input tokens (≈ 85% cache hits) + 4–10k output ≈ **$0.06–0.34, typically $0.15** |
+| Fallback (Task C) | `openai/gpt-5-4-mini` | same | as Task A |
+| Misconfigured primary (Task C) | `anthropic/claude-haiku-5-5` with an invalid key | TrueForge → 401, three attempts | $0 |
+| Small-model check (live re-run) | `openai/gpt-5-4-nano` | same | < $0.001 per Task A |
+
+Prices are gpt-5.4-mini list prices ($0.75 input / $0.075 cached input / $4.50 output per 1M tokens). All development and rehearsal runs together cost a few dollars. Task B's input is large because every tool round re-sends the conversation, and TrueForge's prompt caching absorbs most of it.
 
 To switch models: add or choose a model in TrueForge Settings → Models, then set `forge.model` / `forge.fallbackModel` in VS Code settings. Nothing in the extension is provider-specific.
 
@@ -76,7 +78,7 @@ To switch models: add or choose a model in TrueForge Settings → Models, then s
 |---|---|---|
 | A1 Inline edit | TODO | Task A: select, Ctrl/Cmd+Alt+K, diff with per-hunk ✓ (A) and ✗ (C) |
 | A2 Agent mode | TODO | Task B: 4 files found and edited unprompted (cli.py, test_cli.py, cli.rst, CHANGES.rst) |
-| A3 Streaming + cancel | TODO | tokens stream live; Stop halts in < 50 ms, `git status` clean |
+| A3 Streaming + cancel | TODO | tokens stream live; Stop halts in < 100 ms (measured 24–72 ms), `git status` clean |
 | B1 Context | TODO | Context Receipt: budget meter, reasons, exclusions, live during Task B |
 | B2 Diff safety | TODO | per-hunk review; Forge: Undo (A) and Undo run (B) restore, `git status` clean |
 | B3 Resilience | TODO | Task C: 401 → retry 1/2 → retry 2/2 → automatic fallback, no clicks, clean |

@@ -39,8 +39,10 @@ Source of truth: [PRD.md](PRD.md) §6 (build order). Tick an item only when its 
   - Guard (step 2) and why-this-hunk (reason shown in the review CodeLens, step 3) were already in. Added `src/badges.ts`: Explorer badges 👁 read / ✎ proposed / ✓ applied for the current run.
   - Regression after the extras: taskA ok (diff 5.2 s, badge `applied`), taskC ok (fallback, diff 8.1 s, clean), cancel ok (30 ms / 72 ms, clean).
   - **Feature freeze.** From here on: video, write-up, submission only.
+- [x] Small-model check (PRD §8.3): Task A passes on `openai/gpt-5-4-nano` (diff 3.1 s, 2 hunks, `False`, undo clean).
 - [ ] **8. Record video** per PRD §4. Gate: every clause in PRD §2 visible.
 - [ ] **9. Write-up PDF** per PRD §5, scorecard timestamps from the final cut.
+  - [x] `docs/writeup.md` drafted, measured costs filled in. Left: team details, video URL, timestamps, then PDF.
 - [ ] **10. Clean-clone README check, secrets grep, links public (incognito), submit form.**
   - [x] README rewritten (setup, agent-definition loading incl. tested manual `curl`, architecture, commands, tests).
   - [x] Fresh `git clone` -> `npm install && npm run build` OK; `agent/*.json`, LICENSE present.

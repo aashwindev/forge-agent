@@ -10,6 +10,7 @@ export async function run() {
   const res: Record<string, unknown> = {};
   let ok = false;
   try {
+    if (process.env.FORGE_MODEL) await vscode.workspace.getConfiguration('forge').update('model', process.env.FORGE_MODEL, vscode.ConfigurationTarget.Global);
     note(`git status before: "${gitStatus()}"`);
     const doc = await vscode.workspace.openTextDocument(path.join(root(), 'src/flask/helpers.py'));
     const ed = await vscode.window.showTextDocument(doc);
