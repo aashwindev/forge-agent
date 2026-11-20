@@ -19,7 +19,7 @@ async function main() {
       return `Applied all hunks to ${a.path}.`;
     },
   });
-  const mcp = await startMcpServer(tools, s => console.log('  ' + s));
+  const mcp = await startMcpServer(tools, (n, a) => console.log(`  [mcp] ${n} ${JSON.stringify(a).slice(0, 200)}`));
   const forge = new ForgeClient('http://localhost:8790');
   await forge.ping();
   await forge.registerMcp(mcp.url, mcp.token);

@@ -21,6 +21,7 @@ export type Decision = { toolCallId: string; threadId: string; allow: true } | {
 export interface TurnHandlers {
   onEvent?(e: any): void;
   onText?(delta: string, threadId: string): void;
+  onSession?(sessionId: string): void;
   /** Called when the turn pauses for tool approval. Return one decision per call. */
   onApproval(calls: PendingCall[]): Promise<Decision[]>;
 }
@@ -101,7 +102,8 @@ export class ForgeClient {
    * for approvals (handled by the caller), resumes, and returns the final state.
    */
   async runTurn(spec: any, input: string, h: TurnHandlers, signal?: AbortSignal, existingSessionId?: string): Promise<TurnResult> {
-    const sessionId = existingSessionId ?? (await this.client.sessions.create({ agent: { spec } })).data.id;
+    const sessionId = existingSessionId ?? (await this.client.sessions.create({ agent: { spec } }, { abortSignal: signal })).data.id;
+    h.onSession?.(sessionId);
     const opts = { abortSignal: signal };
     const events = new Map<string, any>();
     let turnId: string | undefined;

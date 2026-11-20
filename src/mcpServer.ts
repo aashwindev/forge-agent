@@ -9,7 +9,7 @@ import { ToolSpec } from './tools';
 
 export interface RunningMcp { url: string; token: string; close(): Promise<void> }
 
-export async function startMcpServer(tools: ToolSpec[], log: (s: string) => void = () => {}): Promise<RunningMcp> {
+export async function startMcpServer(tools: ToolSpec[], onCall: (name: string, args: any) => void = () => {}, log: (s: string) => void = () => {}): Promise<RunningMcp> {
   const token = randomBytes(24).toString('hex');
 
   const server = http.createServer(async (req, res) => {
@@ -24,7 +24,7 @@ export async function startMcpServer(tools: ToolSpec[], log: (s: string) => void
         t.name,
         { title: t.title, description: t.description, inputSchema: t.inputSchema, annotations: t.annotations },
         async (args: any) => {
-          log(`[mcp] ${t.name} ${JSON.stringify(args).slice(0, 200)}`);
+          onCall(t.name, args);
           try {
             return { content: [{ type: 'text' as const, text: await t.handler(args) }] };
           } catch (e) {

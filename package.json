@@ -9,12 +9,45 @@
     "vscode": "^1.90.0"
   },
   "main": "./dist/extension.js",
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "forge.ask",
-        "title": "Forge: Ask Agent"
+        "title": "Forge: Ask Agent (open panel)"
+      },
+      {
+        "command": "forge.inlineEdit",
+        "title": "Forge: Inline Edit Selection"
+      },
+      {
+        "command": "forge.stop",
+        "title": "Forge: Stop",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "forge.undo",
+        "title": "Forge: Undo Last Change"
+      },
+      {
+        "command": "forge.undoRun",
+        "title": "Forge: Undo Last Run"
+      },
+      {
+        "command": "forge.doctor",
+        "title": "Forge: Doctor"
+      },
+      {
+        "command": "forge.acceptAll",
+        "title": "Forge: Accept All Hunks",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "forge.rejectAll",
+        "title": "Forge: Reject All Hunks",
+        "icon": "$(close-all)"
       }
     ],
     "configuration": {
@@ -36,6 +69,61 @@
           "description": "Second model TrueForge switches to automatically if the primary fails. Use a different provider so one bad key cannot take out both."
         }
       }
+    },
+    "keybindings": [
+      {
+        "command": "forge.inlineEdit",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "forge.stop",
+        "key": "ctrl+alt+.",
+        "mac": "cmd+alt+."
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "forge.acceptAll",
+          "when": "resourceScheme == forge-proposal",
+          "group": "navigation"
+        },
+        {
+          "command": "forge.rejectAll",
+          "when": "resourceScheme == forge-proposal",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "forge.acceptAll",
+          "when": "forge.reviewing"
+        },
+        {
+          "command": "forge.rejectAll",
+          "when": "forge.reviewing"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "forge",
+          "title": "Forge",
+          "icon": "media/forge.svg"
+        }
+      ]
+    },
+    "views": {
+      "forge": [
+        {
+          "type": "webview",
+          "id": "forge.panel",
+          "name": "Agent"
+        }
+      ]
     }
   },
   "scripts": {

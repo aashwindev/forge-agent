@@ -33,10 +33,10 @@ const MAX_HITS = 12;
 export interface ValidEdit { ok: true; before: string; after: string }
 export interface InvalidEdit { ok: false; error: string }
 
-export async function validateEdit(ws: Workspace, a: EditArgs): Promise<ValidEdit | InvalidEdit> {
+export async function validateEdit(ws: Workspace, a: EditArgs, current?: string): Promise<ValidEdit | InvalidEdit> {
   let before: string;
   try {
-    before = await ws.read(a.path);
+    before = current ?? (a.old_text === '' && !ws.exists(a.path) ? '' : await ws.read(a.path));
   } catch (e) {
     return { ok: false, error: `Cannot edit ${a.path}: ${(e as Error).message}. Read or search the repository first.` };
   }
